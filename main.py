@@ -69,6 +69,14 @@ def main(page: ft.Page):
                             on_click=lambda _: page.go(f"/history/{patient_dropdown.value}")
                         ),
                     ]
+                elif index == 3:  # Nueva opción para Doctors
+                    dynamic_content.controls = [
+                        ft.Text("Doctors", size=20, weight="bold"),
+                        ft.ElevatedButton(
+                            "Manage Doctors",
+                            on_click=lambda _: page.go("/doctors")  # Navegar a la vista de Doctors
+                        ),
+                    ]
                 page.update()  # Actualizar la página después de cambiar el contenido
 
             rail = ft.NavigationRail(
@@ -92,7 +100,12 @@ def main(page: ft.Page):
                         selected_icon=ft.Icon(ft.Icons.SETTINGS),
                         label_content=ft.Text("History"),
                     ),
-                     ft.NavigationRailDestination(
+                    ft.NavigationRailDestination(
+                        icon=ft.Icons.PEOPLE_OUTLINE,  # Icono para Doctors
+                        selected_icon=ft.Icon(ft.Icons.PEOPLE),
+                        label="Doctors",  # Etiqueta para Doctors
+                    ),
+                    ft.NavigationRailDestination(
                         icon=ft.Icons.SETTINGS_OUTLINED,
                         selected_icon=ft.Icon(ft.Icons.SETTINGS),
                         label_content=config_menu,  # Menú desplegable para Configuration

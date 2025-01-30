@@ -20,11 +20,11 @@ def doctors_view(page: ft.Page):
                     ft.DataCell(ft.Text(doc[2])),
                     ft.DataCell(ft.Text(doc[3])),
                     ft.DataCell(ft.IconButton(
-                        icon=ft.icons.EDIT,
+                        icon=ft.Icons.EDIT,
                         on_click=lambda e, id=doc[0]: load_doctor_to_edit(id)
                     )),
                     ft.DataCell(ft.IconButton(
-                        icon=ft.icons.DELETE,
+                        icon=ft.Icons.DELETE,
                         on_click=lambda e, id=doc[0]: delete_doctor(id)
                     )),
                 ]

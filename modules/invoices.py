@@ -1,8 +1,8 @@
 import flet as ft
 from database.db_config import connect_db
 
-# billing.py
-def billing_view(page: ft.Page):
+# invoices.py
+def invoices_view(page: ft.Page):
     selected_invoice_id = None
 
     def load_invoices():
@@ -15,34 +15,16 @@ def billing_view(page: ft.Page):
             ''')
             return cursor.fetchall()
 
-    def refresh_table():
-        invoices = load_invoices()
-        table.rows = [
-            ft.DataRow(
-                cells=[
-                    ft.DataCell(ft.Text(str(inv[0]))),  # ID
-                    ft.DataCell(ft.Text(inv[1])),  # Patient Name
-                    ft.DataCell(ft.Text(inv[2])),  # Date
-                    ft.DataCell(ft.Text(f"${inv[3]:.2f}")),  # Total Amount
-                    ft.DataCell(ft.Text(inv[4])),  # Status
-                    ft.DataCell(ft.IconButton(
-                        icon=ft.Icons.EDIT,
-                        on_click=lambda e, id=inv[0]: load_invoice_to_edit(id)
-                    )),
-                    ft.DataCell(ft.IconButton(
-                        icon=ft.Icons.DELETE,
-                        on_click=lambda e, id=inv[0]: delete_invoice(id)
-                    )),
-                ]
-            )
-            for inv in invoices
-        ]
-        page.update()
+    def load_patients():
+        with connect_db() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT id, name FROM patients")
+            return cursor.fetchall()
 
     def add_invoice(e):
         nonlocal selected_invoice_id
-        if not patient_dropdown.value or not amount_input.value:
-            page.snack_bar = ft.SnackBar(ft.Text("Patient and Amount are required."))
+        if not patient_dropdown.value or not date_input.value or not total_amount_input.value or not status_dropdown.value:
+            page.snack_bar = ft.SnackBar(ft.Text("All fields are required."))
             page.snack_bar.open = True
             return
 
@@ -51,16 +33,40 @@ def billing_view(page: ft.Page):
             if selected_invoice_id:
                 cursor.execute(
                     "UPDATE invoices SET patient_id = ?, date = ?, total_amount = ?, status = ? WHERE id = ?",
-                    (int(patient_dropdown.value), date_picker.value, float(amount_input.value), status_dropdown.value, selected_invoice_id)
+                    (int(patient_dropdown.value), date_input.value, float(total_amount_input.value), status_dropdown.value, selected_invoice_id)
                 )
             else:
                 cursor.execute(
                     "INSERT INTO invoices (patient_id, date, total_amount, status) VALUES (?, ?, ?, ?)",
-                    (int(patient_dropdown.value), date_picker.value, float(amount_input.value), status_dropdown.value)
+                    (int(patient_dropdown.value), date_input.value, float(total_amount_input.value), status_dropdown.value)
                 )
             conn.commit()
         clear_inputs()
         refresh_table()
+
+    def refresh_table():
+        invoice_entries = load_invoices()
+        table.rows = [
+            ft.DataRow(
+                cells=[
+                    ft.DataCell(ft.Text(str(entry[0]))),  # ID
+                    ft.DataCell(ft.Text(entry[1])),  # Patient Name
+                    ft.DataCell(ft.Text(entry[2])),  # Date
+                    ft.DataCell(ft.Text(f"${entry[3]:.2f}")),  # Total Amount
+                    ft.DataCell(ft.Text(entry[4])),  # Status
+                    ft.DataCell(ft.IconButton(
+                        icon=ft.Icons.EDIT,
+                        on_click=lambda e, id=entry[0]: load_invoice_to_edit(id)
+                    )),
+                    ft.DataCell(ft.IconButton(
+                        icon=ft.Icons.DELETE,
+                        on_click=lambda e, id=entry[0]: delete_invoice(id)
+                    )),
+                ]
+            )
+            for entry in invoice_entries
+        ]
+        page.update()
 
     def load_invoice_to_edit(invoice_id):
         nonlocal selected_invoice_id
@@ -68,12 +74,12 @@ def billing_view(page: ft.Page):
         with connect_db() as conn:
             cursor = conn.cursor()
             cursor.execute("SELECT * FROM invoices WHERE id = ?", (invoice_id,))
-            invoice = cursor.fetchone()
-        if invoice:
-            patient_dropdown.value = str(invoice[1])
-            date_picker.value = invoice[2]
-            amount_input.value = str(invoice[3])
-            status_dropdown.value = invoice[4]
+            invoice_entry = cursor.fetchone()
+        if invoice_entry:
+            patient_dropdown.value = str(invoice_entry[1])
+            date_input.value = invoice_entry[2]
+            total_amount_input.value = str(invoice_entry[3])
+            status_dropdown.value = invoice_entry[4]
             page.update()
 
     def delete_invoice(invoice_id):
@@ -87,18 +93,18 @@ def billing_view(page: ft.Page):
         nonlocal selected_invoice_id
         selected_invoice_id = None
         patient_dropdown.value = None
-        date_picker.value = ""
-        amount_input.value = ""
+        date_input.value = ""
+        total_amount_input.value = ""
         status_dropdown.value = "Pending"
         page.update()
 
-    patients = [(str(p[0]), p[1]) for p in load_invoices()]
+    patients = load_patients()
     patient_dropdown = ft.Dropdown(
-        options=[ft.dropdown.Option(pid, text=name) for pid, name in patients],
-        label="Select a Patient"
+        options=[ft.dropdown.Option(str(pid[0]), text=pid[1]) for pid in patients],
+        label="Select Patient"
     )
-    date_picker = ft.TextField(label="Date (YYYY-MM-DD)")
-    amount_input = ft.TextField(label="Total Amount", keyboard_type=ft.KeyboardType.NUMBER)
+    date_input = ft.TextField(label="Date (YYYY-MM-DD)")
+    total_amount_input = ft.TextField(label="Total Amount", keyboard_type=ft.KeyboardType.NUMBER)
     status_dropdown = ft.Dropdown(
         options=[ft.dropdown.Option("Pending"), ft.dropdown.Option("Paid"), ft.dropdown.Option("Cancelled")],
         label="Status"
@@ -122,7 +128,7 @@ def billing_view(page: ft.Page):
     refresh_table()
 
     return ft.Column([
-        ft.Text("Billing Management", size=24, weight="bold"),
-        ft.Row([patient_dropdown, date_picker, amount_input, status_dropdown, add_button, clear_button]),
+        ft.Text("Invoices Management", size=24, weight="bold"),
+        ft.Row([patient_dropdown, date_input, total_amount_input, status_dropdown, add_button, clear_button]),
         table,
     ])

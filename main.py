@@ -22,99 +22,102 @@ def main(page: ft.Page):
                 )
             )
         elif page.route == "/menu":
+            # Contenido dinámico de la columna derecha
+            dynamic_content = ft.Column([ft.Text("Selecciona una opción del menú.")], expand=True)
+
+            # Menú desplegable para Configuration
+            config_menu = ft.PopupMenuButton(
+                items=[
+                    ft.PopupMenuItem(text="Subopción 1", on_click=lambda _: print("Subopción 1 seleccionada")),
+                    ft.PopupMenuItem(text="Subopción 2", on_click=lambda _: print("Subopción 2 seleccionada")),
+                ],
+                offset=ft.Offset(1, 0),  # Desplazar el menú hacia la derecha
+            )
+            
+            # Función para actualizar el contenido dinámico
+            def update_content(index):
+                if index == 0:
+                    appointments_form = appointments_view(page, only_form=True)
+                    appointments_table = appointments_view(page, only_table=True)
+                    dynamic_content.controls = [
+                        ft.Text("Appointments", size=20, weight="bold"),
+                        ft.Column(
+                            [
+                                appointments_form,
+                                appointments_table,
+                            ],
+                            scroll=True,  # Habilitar scroll solo en esta vista
+                            expand=True,
+                        ),
+                    ]
+                elif index == 1:
+                    dynamic_content.controls = [
+                        ft.Text("Patients", size=20, weight="bold"),
+                        patients_view(page),
+                    ]
+                elif index == 2:
+                    patients = load_patients()
+                    patient_dropdown = ft.Dropdown(
+                        options=[ft.dropdown.Option(str(pt[0]), text=f"{pt[1]} - {pt[2]}") for pt in patients],
+                        label="Select a Patient"
+                    )
+                    dynamic_content.controls = [
+                        ft.Text("Medical History", size=20, weight="bold"),
+                        patient_dropdown,
+                        ft.ElevatedButton(
+                            "View Medical History",
+                            on_click=lambda _: page.go(f"/history/{patient_dropdown.value}")
+                        ),
+                    ]
+                page.update()  # Actualizar la página después de cambiar el contenido
 
             rail = ft.NavigationRail(
-        selected_index=0,
-        label_type=ft.NavigationRailLabelType.ALL,
-        # extended=True,
-        min_width=100,
-        min_extended_width=400,
-        leading=ft.FloatingActionButton(icon=ft.Icons.CREATE, text="Add"),
-        group_alignment=-0.9,
-        destinations=[
-            ft.NavigationRailDestination(
-                icon=ft.Icons.FAVORITE_BORDER, selected_icon=ft.Icons.FAVORITE, label="First"
-            ),
-            ft.NavigationRailDestination(
-                icon=ft.Icon(ft.Icons.BOOKMARK_BORDER),
-                selected_icon=ft.Icon(ft.Icons.BOOKMARK),
-                label="Second",
-            ),
-            ft.NavigationRailDestination(
-                icon=ft.Icons.SETTINGS_OUTLINED,
-                selected_icon=ft.Icon(ft.Icons.SETTINGS),
-                label_content=ft.Text("Settings"),
-            ),
-        ],
-        on_change=lambda e: print("Selected destination:", e.control.selected_index),
-    )
+                selected_index=0,
+                label_type=ft.NavigationRailLabelType.ALL,
+                min_width=100,
+                min_extended_width=100,
+                leading=ft.FloatingActionButton(icon=ft.Icons.CREATE, text="Add"),
+                group_alignment=-0.9,
+                destinations=[
+                    ft.NavigationRailDestination(
+                        icon=ft.Icons.FAVORITE_BORDER, selected_icon=ft.Icons.FAVORITE, label="Appointments"
+                    ),
+                    ft.NavigationRailDestination(
+                        icon=ft.Icon(ft.Icons.BOOKMARK_BORDER),
+                        selected_icon=ft.Icon(ft.Icons.BOOKMARK),
+                        label="Patients",
+                    ),
+                    ft.NavigationRailDestination(
+                        icon=ft.Icons.SETTINGS_OUTLINED,
+                        selected_icon=ft.Icon(ft.Icons.SETTINGS),
+                        label_content=ft.Text("History"),
+                    ),
+                     ft.NavigationRailDestination(
+                        icon=ft.Icons.SETTINGS_OUTLINED,
+                        selected_icon=ft.Icon(ft.Icons.SETTINGS),
+                        label_content=config_menu,  # Menú desplegable para Configuration
+                    ),
+                ],
+                on_change=lambda e: update_content(e.control.selected_index),  # Actualizar contenido dinámico
+            )
+
             # Menú Principal
             page.views.append(
                 ft.View(
                     "/menu",
                     controls=[
-                        ft.Text("Main Menu", size=24, weight="bold"),
-                        ft.ElevatedButton("Patients", on_click=lambda _: page.go("/patients")),
-                        ft.ElevatedButton("Appointments", on_click=lambda _: page.go("/appointments")),
-                        ft.ElevatedButton("Medical History", on_click=lambda _: page.go("/history")),
-                        ft.ElevatedButton("Doctors", on_click=lambda _: page.go("/doctors")),
-                    ]
-                )
-            )
-        elif page.route == "/appointments":
-            # Gestión de Citas
-            page.views.append(
-                ft.View(
-                    "/appointments",
-                    controls=[
                         ft.Row(
                             [
-                                ft.Column([
-                                    ft.Text("Register Appointment", size=20, weight="bold"),
-                                    appointments_view(page, only_form=True),
-                                ], width=300),
-                                ft.Column([
-                                    ft.Text("Scheduled Appointments", size=20, weight="bold"),
-                                    appointments_view(page, only_table=True),
-                                ], expand=True),
-                            ]
+                                rail,
+                                ft.VerticalDivider(width=1),
+                                dynamic_content,  # Columna derecha con contenido dinámico
+                            ],
+                            expand=True,
                         ),
-                        ft.ElevatedButton("Back to Menu", on_click=lambda _: page.go("/menu")),
                     ]
                 )
             )
-        elif page.route == "/patients":
-            # Gestión de Pacientes
-            page.views.append(
-                ft.View(
-                    "/patients",
-                    controls=[
-                        patients_view(page),
-                        ft.ElevatedButton("Back to Menu", on_click=lambda _: page.go("/menu")),
-                    ]
-                )
-            )
-        elif page.route == "/history":
-            # Vista inicial para seleccionar un paciente
-            patients = load_patients()
-            patient_dropdown = ft.Dropdown(
-                options=[ft.dropdown.Option(str(pt[0]), text=f"{pt[1]} - {pt[2]}") for pt in patients],
-                label="Select a Patient"
-            )
-            go_to_history_button = ft.ElevatedButton(
-                "View Medical History",
-                on_click=lambda _: page.go(f"/history/{patient_dropdown.value}")
-            )
-            page.views.append(
-                ft.View(
-                    "/history",
-                    controls=[
-                        ft.Text("Medical History", size=24, weight="bold"),
-                        patient_dropdown,
-                        go_to_history_button,
-                    ]
-                )
-            )
+            page.update()  # Asegurarse de que la vista se actualice
         elif page.route.startswith("/history/"):
             # Historia Clínica de un Paciente
             patient_id = int(page.route.split("/")[-1])  # Extraer el ID del paciente

@@ -24,11 +24,11 @@ def patients_view(page: ft.Page):
                     ft.DataCell(ft.Text(pt[4])),      # Address
                     ft.DataCell(ft.Text(pt[5])),      # History Number
                     ft.DataCell(ft.IconButton(
-                        icon=ft.icons.EDIT,
+                        icon=ft.Icons.EDIT,
                         on_click=lambda e, id=pt[0]: load_patient_to_edit(id)
                     )),
                     ft.DataCell(ft.IconButton(
-                        icon=ft.icons.DELETE,
+                        icon=ft.Icons.DELETE,
                         on_click=lambda e, id=pt[0]: delete_patient(id)
                     )),
                 ]

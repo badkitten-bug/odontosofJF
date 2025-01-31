@@ -1,9 +1,11 @@
 import sqlite3
 
 def connect_db():
+    """Establece y retorna una conexión a la base de datos."""
     return sqlite3.connect("clinic.db", timeout=10)
 
 def create_tables():
+    """Crea todas las tablas necesarias en la base de datos."""
     with connect_db() as conn:
         cursor = conn.cursor()
 
@@ -13,23 +15,28 @@ def create_tables():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT NOT NULL UNIQUE,
             password TEXT NOT NULL,
-            role TEXT NOT NULL
+            role TEXT NOT NULL,
+            email TEXT,
+            last_login TEXT
         )
         ''')
+
         # Tabla de Doctores
         cursor.execute('''
         CREATE TABLE IF NOT EXISTS doctors (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
-        specialty TEXT NOT NULL,
-        phone TEXT
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            specialty TEXT NOT NULL,
+            phone TEXT,
+            email TEXT,
+            schedule TEXT
         )
         ''')
 
         # Usuario predeterminado
         cursor.execute("SELECT * FROM users WHERE username = 'admin'")
         if cursor.fetchone() is None:
-            cursor.execute("INSERT INTO users (username, password, role) VALUES ('admin', 'admin123', 'admin')")
+            cursor.execute("INSERT INTO users (username, password, role, email) VALUES ('admin', 'admin123', 'admin', 'admin@clinic.com')")
 
         # Tabla de Pacientes
         cursor.execute('''
@@ -39,7 +46,10 @@ def create_tables():
             age INTEGER,
             phone TEXT,
             address TEXT,
-            history_number TEXT UNIQUE,  -- Número de historia clínica único
+            email TEXT,
+            gender TEXT,
+            blood_type TEXT,
+            history_number TEXT UNIQUE,
             is_deleted INTEGER DEFAULT 0
         )
         ''')
@@ -52,11 +62,34 @@ def create_tables():
             doctor_id INTEGER NOT NULL,
             date TEXT NOT NULL,
             time TEXT NOT NULL,
+            duration INTEGER,
             notes TEXT,
             status TEXT DEFAULT 'Pending',
             is_deleted INTEGER DEFAULT 0,
             FOREIGN KEY(patient_id) REFERENCES patients(id),
             FOREIGN KEY(doctor_id) REFERENCES doctors(id)
+        )
+        ''')
+
+        # Tabla de Tratamientos
+        cursor.execute('''
+        CREATE TABLE IF NOT EXISTS treatments (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL UNIQUE,
+            description TEXT,
+            cost REAL NOT NULL
+        )
+        ''')
+
+        # Tabla de Tratamientos Aplicados (Relación entre Citas y Tratamientos)
+        cursor.execute('''
+        CREATE TABLE IF NOT EXISTS applied_treatments (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            appointment_id INTEGER NOT NULL,
+            treatment_id INTEGER NOT NULL,
+            notes TEXT,
+            FOREIGN KEY(appointment_id) REFERENCES appointments(id),
+            FOREIGN KEY(treatment_id) REFERENCES treatments(id)
         )
         ''')
 
@@ -69,6 +102,7 @@ def create_tables():
             date TEXT NOT NULL,
             diagnosis TEXT NOT NULL,
             procedure TEXT NOT NULL,
+            treatment_plan TEXT,
             notes TEXT,
             attachments TEXT,
             FOREIGN KEY(patient_id) REFERENCES patients(id),
@@ -83,10 +117,122 @@ def create_tables():
             patient_id INTEGER NOT NULL,
             date TEXT NOT NULL,
             amount REAL NOT NULL,
+            payment_method TEXT,
             status TEXT DEFAULT 'Pending',
             notes TEXT,
             FOREIGN KEY(patient_id) REFERENCES patients(id)
         )
         ''')
 
+        # Tabla de Inventario
+        cursor.execute('''
+        CREATE TABLE IF NOT EXISTS inventory (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            description TEXT,
+            quantity INTEGER NOT NULL,
+            cost REAL NOT NULL
+        )
+        ''')
+
+        # Tabla de Odontograma
+        cursor.execute('''
+        CREATE TABLE IF NOT EXISTS odontogram (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            patient_id INTEGER NOT NULL,
+            tooth_number INTEGER NOT NULL,
+            condition TEXT,
+            notes TEXT,
+            date TEXT NOT NULL,
+            FOREIGN KEY(patient_id) REFERENCES patients(id)
+        )
+        ''')
+
+        # Tabla de Seguros Médicos
+        cursor.execute('''
+        CREATE TABLE IF NOT EXISTS insurance (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            patient_id INTEGER NOT NULL,
+            insurance_company TEXT NOT NULL,
+            policy_number TEXT NOT NULL,
+            coverage_details TEXT,
+            FOREIGN KEY(patient_id) REFERENCES patients(id)
+        )
+        ''')
+
+        # Tabla de Prescripciones
+        cursor.execute('''
+        CREATE TABLE IF NOT EXISTS prescriptions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            patient_id INTEGER NOT NULL,
+            doctor_id INTEGER NOT NULL,
+            date TEXT NOT NULL,
+            medication TEXT NOT NULL,
+            dosage TEXT NOT NULL,
+            instructions TEXT,
+            FOREIGN KEY(patient_id) REFERENCES patients(id),
+            FOREIGN KEY(doctor_id) REFERENCES doctors(id)
+        )
+        ''')
+
+        # Tabla de Facturas
+        cursor.execute('''
+        CREATE TABLE IF NOT EXISTS invoices (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            patient_id INTEGER NOT NULL,
+            date TEXT NOT NULL,
+            total_amount REAL NOT NULL,
+            status TEXT DEFAULT 'Pending',
+            FOREIGN KEY(patient_id) REFERENCES patients(id)
+        )
+        ''')
+
+        # Tabla de Comentarios y Calificaciones
+        cursor.execute('''
+        CREATE TABLE IF NOT EXISTS feedback (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            patient_id INTEGER NOT NULL,
+            doctor_id INTEGER NOT NULL,
+            date TEXT NOT NULL,
+            rating INTEGER NOT NULL,
+            comments TEXT,
+            FOREIGN KEY(patient_id) REFERENCES patients(id),
+            FOREIGN KEY(doctor_id) REFERENCES doctors(id)
+        )
+        ''')
+
+        # Tabla de Horarios de Doctores
+        cursor.execute('''
+        CREATE TABLE IF NOT EXISTS doctor_schedules (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            doctor_id INTEGER NOT NULL,
+            day_of_week TEXT NOT NULL,
+            start_time TEXT NOT NULL,
+            end_time TEXT NOT NULL,
+            FOREIGN KEY(doctor_id) REFERENCES doctors(id)
+        )
+        ''')
+
+        # Tabla de Recursos Humanos
+        cursor.execute('''
+        CREATE TABLE IF NOT EXISTS hr (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            role TEXT NOT NULL,
+            phone TEXT,
+            email TEXT,
+            hire_date TEXT NOT NULL
+        )
+        ''')
+
+        # Índices para mejorar el rendimiento de las consultas
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_patient_id ON appointments(patient_id)')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_doctor_id ON appointments(doctor_id)')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_patient_id_history ON history(patient_id)')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_patient_id_odontogram ON odontogram(patient_id)')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_patient_id_payments ON payments(patient_id)')
+
         conn.commit()
+
+# Llamada a la función para crear las tablas al importar el módulo
+create_tables()

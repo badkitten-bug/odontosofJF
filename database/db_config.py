@@ -1,4 +1,5 @@
 import sqlite3
+from datetime import datetime
 
 def connect_db():
     """Establece y retorna una conexión a la base de datos."""
@@ -15,42 +16,71 @@ def create_tables():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT NOT NULL UNIQUE,
             password TEXT NOT NULL,
-            role TEXT NOT NULL,
+            role TEXT NOT NULL,  -- Roles: admin, doctor, recepcionista, etc.
             email TEXT,
-            last_login TEXT
+            last_login TEXT,
+            fecha_registro TEXT NOT NULL,  -- Fecha de registro del usuario
+            ultima_actualizacion TEXT      -- Última actualización del usuario
         )
         ''')
+        # Verificar si el usuario predeterminado ya existe
+        cursor.execute("SELECT * FROM users WHERE username = 'admin'")
+        if cursor.fetchone() is None:
+            # Insertar el usuario predeterminado (admin)
+            cursor.execute('''
+            INSERT INTO users (username, password, role, email, fecha_registro)
+            VALUES (?, ?, ?, ?, ?)
+            ''', ('admin', 'admin123', 'admin', 'admin@clinic.com', datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
 
-        # Tabla de Doctores
+        # Tabla de Doctores (Odontólogos)
         cursor.execute('''
         CREATE TABLE IF NOT EXISTS doctors (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT NOT NULL,
-            specialty TEXT NOT NULL,
-            phone TEXT,
+            specialty TEXT NOT NULL,  -- Especialidad del odontólogo
+            tipo_documento TEXT,     -- Tipo de documento (DNI, CE, etc.)
+            nro_doc TEXT UNIQUE,     -- Número de documento
+            ruc TEXT,                -- RUC (opcional)
+            colegiatura TEXT UNIQUE, -- Número de colegiatura
+            fecha_nacimiento TEXT,   -- Fecha de nacimiento
+            phone TEXT,              -- Teléfono fijo
+            celular TEXT,            -- Celular
+            gender TEXT,             -- Género
+            estado TEXT DEFAULT 'Activo',  -- Estado: Activo, Inactivo
             email TEXT,
-            schedule TEXT
+            foto TEXT,               -- URL o ruta de la foto
+            usuario TEXT UNIQUE,     -- Nombre de usuario
+            password TEXT,           -- Contraseña
+            is_deleted INTEGER DEFAULT 0,  -- Soft delete
+            fecha_registro TEXT NOT NULL,  -- Fecha de registro
+            ultima_actualizacion TEXT      -- Última actualización
         )
         ''')
-
-        # Usuario predeterminado
-        cursor.execute("SELECT * FROM users WHERE username = 'admin'")
-        if cursor.fetchone() is None:
-            cursor.execute("INSERT INTO users (username, password, role, email) VALUES ('admin', 'admin123', 'admin', 'admin@clinic.com')")
-
         # Tabla de Pacientes
         cursor.execute('''
         CREATE TABLE IF NOT EXISTS patients (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT NOT NULL,
-            age INTEGER,
-            phone TEXT,
-            address TEXT,
+            age INTEGER,              -- Edad del paciente
+            phone TEXT,               -- Teléfono
+            address TEXT,             -- Dirección
             email TEXT,
-            gender TEXT,
-            blood_type TEXT,
-            history_number TEXT UNIQUE,
-            is_deleted INTEGER DEFAULT 0
+            gender TEXT,              -- Género
+            blood_type TEXT,          -- Tipo de sangre
+            history_number TEXT UNIQUE,  -- Número de historia clínica
+            grado_instruccion TEXT,   -- Grado de instrucción
+            hospital_nacimiento TEXT, -- Hospital de nacimiento
+            pais TEXT,                -- País
+            departamento TEXT,        -- Departamento
+            provincia TEXT,           -- Provincia
+            distrito TEXT,            -- Distrito
+            estado_civil TEXT,        -- Estado civil
+            afiliado TEXT,            -- Afiliado a algún seguro
+            alergias TEXT,            -- Alergias (puede ser JSON o texto)
+            observaciones TEXT,       -- Observaciones adicionales
+            is_deleted INTEGER DEFAULT 0,  -- Soft delete
+            fecha_registro TEXT NOT NULL,  -- Fecha de registro
+            ultima_visita TEXT             -- Última visita
         )
         ''')
 
@@ -60,14 +90,25 @@ def create_tables():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             patient_id INTEGER NOT NULL,
             doctor_id INTEGER NOT NULL,
-            date TEXT NOT NULL,
-            time TEXT NOT NULL,
-            duration INTEGER,
-            notes TEXT,
-            status TEXT DEFAULT 'Pending',
-            is_deleted INTEGER DEFAULT 0,
+            date TEXT NOT NULL,       -- Fecha de la cita
+            time TEXT NOT NULL,       -- Hora de la cita
+            duration INTEGER,         -- Duración en minutos
+            notes TEXT,               -- Notas adicionales
+            especialidad TEXT,        -- Especialidad requerida
+            status TEXT DEFAULT 'Pendiente',  -- Estado: Pendiente, Atendido, Cancelado
+            tipo_cita_id INTEGER,     -- Tipo de cita (relación con appointment_types)
+            is_deleted INTEGER DEFAULT 0,  -- Soft delete
             FOREIGN KEY(patient_id) REFERENCES patients(id),
-            FOREIGN KEY(doctor_id) REFERENCES doctors(id)
+            FOREIGN KEY(doctor_id) REFERENCES doctors(id),
+            FOREIGN KEY(tipo_cita_id) REFERENCES appointment_types(id)
+        )
+        ''')
+
+        # Tabla de Tipos de Cita
+        cursor.execute('''
+        CREATE TABLE IF NOT EXISTS appointment_types (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL UNIQUE  -- Ejemplo: Consulta, Limpieza, Ortodoncia, etc.
         )
         ''')
 
@@ -75,9 +116,9 @@ def create_tables():
         cursor.execute('''
         CREATE TABLE IF NOT EXISTS treatments (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL UNIQUE,
-            description TEXT,
-            cost REAL NOT NULL
+            name TEXT NOT NULL UNIQUE,  -- Nombre del tratamiento
+            description TEXT,           -- Descripción del tratamiento
+            cost REAL NOT NULL          -- Costo del tratamiento
         )
         ''')
 
@@ -87,7 +128,7 @@ def create_tables():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             appointment_id INTEGER NOT NULL,
             treatment_id INTEGER NOT NULL,
-            notes TEXT,
+            notes TEXT,  -- Notas adicionales sobre el tratamiento aplicado
             FOREIGN KEY(appointment_id) REFERENCES appointments(id),
             FOREIGN KEY(treatment_id) REFERENCES treatments(id)
         )
@@ -99,12 +140,12 @@ def create_tables():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             patient_id INTEGER NOT NULL,
             doctor_id INTEGER NOT NULL,
-            date TEXT NOT NULL,
-            diagnosis TEXT NOT NULL,
-            procedure TEXT NOT NULL,
-            treatment_plan TEXT,
-            notes TEXT,
-            attachments TEXT,
+            date TEXT NOT NULL,        -- Fecha del registro
+            diagnosis TEXT NOT NULL,   -- Diagnóstico
+            procedure TEXT NOT NULL,   -- Procedimiento realizado
+            treatment_plan TEXT,       -- Plan de tratamiento
+            notes TEXT,                -- Notas adicionales
+            attachments TEXT,          -- Archivos adjuntos (JSON o texto)
             FOREIGN KEY(patient_id) REFERENCES patients(id),
             FOREIGN KEY(doctor_id) REFERENCES doctors(id)
         )
@@ -115,11 +156,11 @@ def create_tables():
         CREATE TABLE IF NOT EXISTS payments (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             patient_id INTEGER NOT NULL,
-            date TEXT NOT NULL,
-            amount REAL NOT NULL,
-            payment_method TEXT,
-            status TEXT DEFAULT 'Pending',
-            notes TEXT,
+            date TEXT NOT NULL,        -- Fecha del pago
+            amount REAL NOT NULL,      -- Monto del pago
+            payment_method TEXT,       -- Método de pago (Efectivo, Tarjeta, etc.)
+            status TEXT DEFAULT 'Pending',  -- Estado: Pendiente, Completado
+            notes TEXT,                -- Notas adicionales
             FOREIGN KEY(patient_id) REFERENCES patients(id)
         )
         ''')
@@ -128,10 +169,10 @@ def create_tables():
         cursor.execute('''
         CREATE TABLE IF NOT EXISTS inventory (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,
-            description TEXT,
-            quantity INTEGER NOT NULL,
-            cost REAL NOT NULL
+            name TEXT NOT NULL,        -- Nombre del artículo
+            description TEXT,          -- Descripción
+            quantity INTEGER NOT NULL, -- Cantidad en stock
+            cost REAL NOT NULL         -- Costo unitario
         )
         ''')
 
@@ -140,10 +181,10 @@ def create_tables():
         CREATE TABLE IF NOT EXISTS odontogram (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             patient_id INTEGER NOT NULL,
-            tooth_number INTEGER NOT NULL,
-            condition TEXT,
-            notes TEXT,
-            date TEXT NOT NULL,
+            tooth_number INTEGER NOT NULL,  -- Número del diente
+            condition TEXT,                 -- Condición del diente
+            notes TEXT,                     -- Notas adicionales
+            date TEXT NOT NULL,             -- Fecha del registro
             FOREIGN KEY(patient_id) REFERENCES patients(id)
         )
         ''')
@@ -153,9 +194,9 @@ def create_tables():
         CREATE TABLE IF NOT EXISTS insurance (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             patient_id INTEGER NOT NULL,
-            insurance_company TEXT NOT NULL,
-            policy_number TEXT NOT NULL,
-            coverage_details TEXT,
+            insurance_company TEXT NOT NULL,  -- Compañía de seguros
+            policy_number TEXT NOT NULL,      -- Número de póliza
+            coverage_details TEXT,            -- Detalles de la cobertura
             FOREIGN KEY(patient_id) REFERENCES patients(id)
         )
         ''')
@@ -166,10 +207,10 @@ def create_tables():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             patient_id INTEGER NOT NULL,
             doctor_id INTEGER NOT NULL,
-            date TEXT NOT NULL,
-            medication TEXT NOT NULL,
-            dosage TEXT NOT NULL,
-            instructions TEXT,
+            date TEXT NOT NULL,        -- Fecha de la prescripción
+            medication TEXT NOT NULL,  -- Medicamento
+            dosage TEXT NOT NULL,      -- Dosificación
+            instructions TEXT,         -- Instrucciones adicionales
             FOREIGN KEY(patient_id) REFERENCES patients(id),
             FOREIGN KEY(doctor_id) REFERENCES doctors(id)
         )
@@ -180,9 +221,9 @@ def create_tables():
         CREATE TABLE IF NOT EXISTS invoices (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             patient_id INTEGER NOT NULL,
-            date TEXT NOT NULL,
-            total_amount REAL NOT NULL,
-            status TEXT DEFAULT 'Pending',
+            date TEXT NOT NULL,        -- Fecha de la factura
+            total_amount REAL NOT NULL,  -- Monto total
+            status TEXT DEFAULT 'Pending',  -- Estado: Pendiente, Pagado
             FOREIGN KEY(patient_id) REFERENCES patients(id)
         )
         ''')
@@ -193,9 +234,9 @@ def create_tables():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             patient_id INTEGER NOT NULL,
             doctor_id INTEGER NOT NULL,
-            date TEXT NOT NULL,
-            rating INTEGER NOT NULL,
-            comments TEXT,
+            date TEXT NOT NULL,        -- Fecha del comentario
+            rating INTEGER NOT NULL,   -- Calificación (1-5)
+            comments TEXT,             -- Comentarios
             FOREIGN KEY(patient_id) REFERENCES patients(id),
             FOREIGN KEY(doctor_id) REFERENCES doctors(id)
         )
@@ -206,22 +247,35 @@ def create_tables():
         CREATE TABLE IF NOT EXISTS doctor_schedules (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             doctor_id INTEGER NOT NULL,
-            day_of_week TEXT NOT NULL,
-            start_time TEXT NOT NULL,
-            end_time TEXT NOT NULL,
+            day_of_week TEXT NOT NULL,  -- Día de la semana (Lunes, Martes, etc.)
+            start_time TEXT NOT NULL,   -- Hora de inicio
+            end_time TEXT NOT NULL,     -- Hora de fin
             FOREIGN KEY(doctor_id) REFERENCES doctors(id)
         )
         ''')
 
-        # Tabla de Recursos Humanos
+        # Tabla de Procedimientos
         cursor.execute('''
-        CREATE TABLE IF NOT EXISTS hr (
+        CREATE TABLE IF NOT EXISTS procedures (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,
-            role TEXT NOT NULL,
-            phone TEXT,
-            email TEXT,
-            hire_date TEXT NOT NULL
+            name TEXT NOT NULL,        -- Nombre del procedimiento
+            description TEXT,          -- Descripción
+            cost REAL NOT NULL,        -- Costo
+            categoria TEXT,            -- Categoría
+            tipo_concepto TEXT,        -- Tipo de concepto
+            fecha_registro TEXT,       -- Fecha de registro
+            estado TEXT DEFAULT 'Activo'  -- Estado: Activo, Inactivo
+        )
+        ''')
+
+        # Tabla de Configuración
+        cursor.execute('''
+        CREATE TABLE IF NOT EXISTS config (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            tipo_pago TEXT,            -- Tipo de pago (Efectivo, Tarjeta, etc.)
+            moneda TEXT,               -- Moneda (PEN, USD, etc.)
+            banco TEXT,                -- Banco
+            tipo_tarjeta TEXT          -- Tipo de tarjeta (Visa, MasterCard, etc.)
         )
         ''')
 

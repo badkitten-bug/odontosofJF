@@ -27,7 +27,19 @@ def main(page: ft.Page):
         dynamic_content = ft.Column([ft.Text("Selecciona una opción del menú.")], expand=True, scroll=ft.ScrollMode.AUTO)
 
         def update_content(index):
-            if index == 2:  # Medical History
+            if index == 1:  # Registro
+                dynamic_content.controls = [
+                    ft.Text("Registro", size=20, weight="bold"),
+                    ft.ElevatedButton(
+                        "Paciente",
+                        on_click=lambda _: show_patients_view(dynamic_content)
+                    ),
+                    ft.ElevatedButton(
+                        "Odontólogo",
+                        on_click=lambda _: show_doctors_view(dynamic_content)
+                    ),
+                ]
+            elif index == 2:  # Medical History
                 setup_medical_history_view(dynamic_content)
             elif index == 6:  # Odontogram
                 setup_odontogram_view(dynamic_content)
@@ -49,6 +61,20 @@ def main(page: ft.Page):
                 ]
             )
         )
+        page.update()
+
+    def show_patients_view(dynamic_content):
+        dynamic_content.controls = [
+            ft.Text("Pacientes", size=20, weight="bold"),
+            patients_view(page),
+        ]
+        page.update()
+
+    def show_doctors_view(dynamic_content):
+        dynamic_content.controls = [
+            ft.Text("Doctores", size=20, weight="bold"),
+            doctors_view(page),
+        ]
         page.update()
 
     def setup_medical_history_view(dynamic_content):
@@ -90,9 +116,8 @@ def main(page: ft.Page):
     def setup_general_view(dynamic_content, index):
         views = [
             ("Appointments", appointments_view(page)),
-            ("Patients", patients_view(page)),
+            ("Registro", None),  # Este índice ahora maneja el registro
             ("Medical History", history_view(page, None)),
-            ("Doctors", doctors_view(page)),
             ("Inventory", inventory_view(page)),
             ("Payments & Invoices", ft.Column([payments_view(page), invoices_view(page)])),
             ("Odontogram", odontogram_view(page, None)),
@@ -102,10 +127,11 @@ def main(page: ft.Page):
             ("Doctor Schedules", doctor_schedules_view(page)),
             ("HR Management", hr_view(page)),
         ]
-        dynamic_content.controls = [
-            ft.Text(views[index][0], size=20, weight="bold"),
-            views[index][1]
-        ]
+        if index != 1:  # Evitar mostrar contenido para "Registro"
+            dynamic_content.controls = [
+                ft.Text(views[index][0], size=20, weight="bold"),
+                views[index][1]
+            ]
 
     def create_navigation_rail(update_content):
         return ft.NavigationRail(
@@ -117,9 +143,8 @@ def main(page: ft.Page):
             group_alignment=-0.9,
             destinations=[
                 ft.NavigationRailDestination(icon=ft.Icons.EVENT, label="Appointments"),
-                ft.NavigationRailDestination(icon=ft.Icons.PERSON, label="Patients"),
+                ft.NavigationRailDestination(icon=ft.Icons.PERSON, label="Registro"),
                 ft.NavigationRailDestination(icon=ft.Icons.HISTORY, label="History"),
-                ft.NavigationRailDestination(icon=ft.Icons.LOCAL_HOSPITAL, label="Doctors"),
                 ft.NavigationRailDestination(icon=ft.Icons.INVENTORY, label="Inventory"),
                 ft.NavigationRailDestination(icon=ft.Icons.PAYMENT, label="Payments & Invoices"),
                 ft.NavigationRailDestination(icon=ft.Icons.MEDICAL_SERVICES, label="Odontogram"),

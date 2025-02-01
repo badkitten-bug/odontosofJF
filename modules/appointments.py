@@ -1,7 +1,8 @@
 import flet as ft
 from database.db_config import connect_db
+from datetime import datetime, timedelta
 
-def appointments_view(page: ft.Page, only_form=False, only_table=False):
+def appointments_view(page: ft.Page):
     selected_appointment_id = None  # Para almacenar el ID de la cita seleccionada para edición
 
     # Cargar pacientes desde la base de datos
@@ -15,26 +16,37 @@ def appointments_view(page: ft.Page, only_form=False, only_table=False):
     def load_doctors():
         with connect_db() as conn:
             cursor = conn.cursor()
-            cursor.execute("SELECT id, name FROM doctors")
+            cursor.execute("SELECT id, name, specialty FROM doctors")
             return cursor.fetchall()
 
     # Cargar citas desde la base de datos
-    def load_appointments():
+    def load_appointments(date=None, doctor_id=None, status=None):
         with connect_db() as conn:
             cursor = conn.cursor()
-            cursor.execute('''
+            query = '''
                 SELECT appointments.id, patients.name, doctors.name, appointments.date, appointments.time, 
                        appointments.duration, appointments.notes, appointments.status
                 FROM appointments
                 JOIN patients ON appointments.patient_id = patients.id
                 JOIN doctors ON appointments.doctor_id = doctors.id
                 WHERE appointments.is_deleted = 0
-            ''')
+            '''
+            params = []
+            if date:
+                query += " AND appointments.date = ?"
+                params.append(date)
+            if doctor_id:
+                query += " AND appointments.doctor_id = ?"
+                params.append(doctor_id)
+            if status:
+                query += " AND appointments.status = ?"
+                params.append(status)
+            cursor.execute(query, params)
             return cursor.fetchall()
 
     # Actualizar la tabla de citas
-    def refresh_table():
-        appointments = load_appointments()
+    def refresh_table(date=None, doctor_id=None, status=None):
+        appointments = load_appointments(date, doctor_id, status)
         table.rows = [
             ft.DataRow(
                 cells=[
@@ -139,7 +151,7 @@ def appointments_view(page: ft.Page, only_form=False, only_table=False):
     )
     doctors = load_doctors()
     doctor_dropdown = ft.Dropdown(
-        options=[ft.dropdown.Option(str(doc[0]), text=doc[1]) for doc in doctors],
+        options=[ft.dropdown.Option(str(doc[0]), text=f"{doc[1]} - {doc[2]}") for doc in doctors],
         label="Seleccionar Doctor"
     )
     date_picker = ft.TextField(label="Fecha (YYYY-MM-DD)")

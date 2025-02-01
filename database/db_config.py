@@ -9,7 +9,7 @@ def create_tables():
     with connect_db() as conn:
         cursor = conn.cursor()
 
-        # Tabla de Usuarios
+        # Tabla de Usuarios (para el login de cuenta)
         cursor.execute('''
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -21,15 +21,28 @@ def create_tables():
         )
         ''')
 
-        # Tabla de Doctores
+        # Tabla de Doctores (Odontólogos) con campos extendidos para Perú
         cursor.execute('''
         CREATE TABLE IF NOT EXISTS doctors (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,
-            specialty TEXT NOT NULL,
-            phone TEXT,
-            email TEXT,
-            schedule TEXT
+            nombres TEXT NOT NULL,
+            apellidos TEXT NOT NULL,
+            especialidad TEXT NOT NULL,
+            tipo_documento TEXT,
+            nro_documento TEXT,
+            ruc TEXT,
+            direccion TEXT,
+            colegiatura TEXT,
+            fecha_registro TEXT,
+            fecha_nacimiento TEXT,
+            telefono TEXT,
+            celular TEXT,
+            sexo TEXT,
+            estado TEXT,
+            correo TEXT,
+            foto TEXT,
+            usuario TEXT UNIQUE,
+            password TEXT
         )
         ''')
 
@@ -38,20 +51,44 @@ def create_tables():
         if cursor.fetchone() is None:
             cursor.execute("INSERT INTO users (username, password, role, email) VALUES ('admin', 'admin123', 'admin', 'admin@clinic.com')")
 
-        # Tabla de Pacientes
+        # Tabla de Pacientes con campos ampliados para Perú
         cursor.execute('''
         CREATE TABLE IF NOT EXISTS patients (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,
-            age INTEGER,
-            phone TEXT,
-            address TEXT,
-            email TEXT,
-            gender TEXT,
-            blood_type TEXT,
-            history_number TEXT UNIQUE,
+            history_number TEXT, -- Número de historia clínica (se generará automáticamente)
+            nombres TEXT NOT NULL,
+            apellidos TEXT NOT NULL,
+            edad INTEGER,
+            documento TEXT,
+            grado_instruccion TEXT,
+            hospital_nacimiento TEXT,
+            pais TEXT,
+            departamento TEXT,
+            provincia TEXT,
+            distrito TEXT,
+            direccion TEXT,
+            telefono TEXT,
+            fecha_nacimiento TEXT,
+            estado_civil TEXT,
+            afiliado TEXT,
+            sexo TEXT,
+            alergia TEXT,
+            correo TEXT,
+            observacion TEXT,
+            fecha_registro TEXT,
+            estado TEXT,
             is_deleted INTEGER DEFAULT 0
         )
+        ''')
+
+        # Crear trigger para asignar history_number automáticamente al insertar un paciente
+        cursor.execute('''
+        CREATE TRIGGER IF NOT EXISTS set_history_number AFTER INSERT ON patients
+        BEGIN
+            UPDATE patients
+            SET history_number = NEW.fecha_registro || '-' || NEW.id
+            WHERE id = NEW.id;
+        END;
         ''')
 
         # Tabla de Citas
@@ -234,5 +271,6 @@ def create_tables():
 
         conn.commit()
 
-# Llamada a la función para crear las tablas al importar el módulo
-create_tables()
+if __name__ == "__main__":
+    create_tables()
+    print("Base de datos 'clinic.db' creada exitosamente con la estructura ampliada para Perú.")

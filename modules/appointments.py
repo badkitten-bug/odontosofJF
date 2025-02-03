@@ -59,11 +59,11 @@ def appointments_view(page: ft.Page):
                     ft.DataCell(ft.Text(appt[6])),  # Notas
                     ft.DataCell(ft.Text(appt[7])),  # Estado
                     ft.DataCell(ft.IconButton(
-                        icon=ft.icons.EDIT,
+                        icon=ft.Icons.EDIT,
                         on_click=lambda e, id=appt[0]: load_appointment_to_edit(id)
                     )),
                     ft.DataCell(ft.IconButton(
-                        icon=ft.icons.DELETE,
+                        icon=ft.Icons.DELETE,
                         on_click=lambda e, id=appt[0]: delete_appointment(id)
                     )),
                 ]

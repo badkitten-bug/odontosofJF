@@ -38,11 +38,11 @@ def history_view(page: ft.Page, patient_id):
                     ft.DataCell(ft.Text(entry[6])),      # Adjuntos
                     ft.DataCell(ft.Text(entry[7])),      # Nombre del doctor
                     ft.DataCell(ft.IconButton(
-                        icon=ft.icons.EDIT,
+                        icon=ft.Icons.EDIT,
                         on_click=lambda e, id=entry[0]: load_history_to_edit(id)
                     )),
                     ft.DataCell(ft.IconButton(
-                        icon=ft.icons.DELETE,
+                        icon=ft.Icons.DELETE,
                         on_click=lambda e, id=entry[0]: delete_history(id)
                     )),
                 ]

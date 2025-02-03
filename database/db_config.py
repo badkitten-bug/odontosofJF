@@ -27,7 +27,7 @@ def create_tables():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             nombres TEXT NOT NULL,
             apellidos TEXT NOT NULL,
-            especialidad TEXT NOT NULL,
+            especialidad_id INTEGER,
             tipo_documento TEXT,
             nro_documento TEXT,
             ruc TEXT,
@@ -42,7 +42,8 @@ def create_tables():
             correo TEXT,
             foto TEXT,
             usuario TEXT UNIQUE,
-            password TEXT
+            password TEXT,
+            FOREIGN KEY (especialidad_id) REFERENCES specialties(id)
         )
         ''')
 
@@ -260,6 +261,125 @@ def create_tables():
             email TEXT,
             hire_date TEXT NOT NULL
         )
+        ''')
+
+        # Tabla de especialidades
+        cursor.execute('''
+        CREATE TABLE IF NOT EXISTS specialties (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            nombre TEXT NOT NULL UNIQUE,
+            codigo INTEGER UNIQUE,  -- Se generará automáticamente
+            descripcion TEXT,
+            estado TEXT DEFAULT 'Activo'
+        );
+        ''')
+
+        # Trigger para asignar el código automáticamente si no se proporciona
+        cursor.execute('''
+        CREATE TRIGGER IF NOT EXISTS set_specialty_codigo AFTER INSERT ON specialties
+        BEGIN
+            UPDATE specialties
+            SET codigo = (SELECT COALESCE(MAX(codigo), 0) + 1 FROM specialties)
+            WHERE id = NEW.id AND NEW.codigo IS NULL;
+        END;
+        ''')
+
+        # Tabla de Historias Clínicas
+        cursor.execute('''
+        CREATE TABLE IF NOT EXISTS historias_clinicas (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            paciente_id INTEGER NOT NULL,
+            numero_historia TEXT NOT NULL UNIQUE,
+            fecha_creacion TEXT NOT NULL,
+            observaciones TEXT,
+            FOREIGN KEY (paciente_id) REFERENCES patients(id)
+        );
+        ''')
+
+        # Tabla de Exploración Física
+        cursor.execute('''
+        CREATE TABLE IF NOT EXISTS exploracion_fisica (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            historia_id INTEGER NOT NULL,
+            enfermedad_actual TEXT,
+            tiempo_enfermedad TEXT,
+            motivo_consulta TEXT,
+            signos_sintomas TEXT,
+            antecedentes_personales TEXT,
+            antecedentes_familiares TEXT,
+            medicamento_actual TEXT,
+            motivo_uso_medicamento TEXT,
+            dosis_medicamento TEXT,
+            tratamiento_ortodoncia TEXT,
+            alergico_medicamento TEXT,
+            hospitalizado TEXT,
+            transtorno_nervioso TEXT,
+            enfermedades_padecidas TEXT,
+            cepilla_dientes TEXT,
+            presion_arterial TEXT,
+            FOREIGN KEY (historia_id) REFERENCES historias_clinicas(id)
+        );
+        ''')
+
+        # Tabla de Funciones Vitales
+        cursor.execute('''
+        CREATE TABLE IF NOT EXISTS funciones_vitales (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            historia_id INTEGER NOT NULL,
+            presion_arterial TEXT,
+            pulso TEXT,
+            temperatura TEXT,
+            frecuencia_cardiaca TEXT,
+            frecuencia_respiratoria TEXT,
+            peso TEXT,
+            talla TEXT,
+            imc TEXT,
+            FOREIGN KEY (historia_id) REFERENCES historias_clinicas(id)
+        );
+        ''')
+
+        # Tabla de Alergias
+        cursor.execute('''
+        CREATE TABLE IF NOT EXISTS alergias (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            historia_id INTEGER NOT NULL,
+            alergia TEXT,
+            observaciones TEXT,
+            FOREIGN KEY (historia_id) REFERENCES historias_clinicas(id)
+        );
+        ''')
+
+        # Tabla de Odontograma (detallado)
+        cursor.execute('''
+        CREATE TABLE IF NOT EXISTS odontograma_detalle (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            historia_id INTEGER NOT NULL,
+            diente TEXT,
+            observaciones TEXT,
+            FOREIGN KEY (historia_id) REFERENCES historias_clinicas(id)
+        );
+        ''')
+
+        # Tabla de Diagnósticos
+        cursor.execute('''
+        CREATE TABLE IF NOT EXISTS diagnosticos (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            historia_id INTEGER NOT NULL,
+            diagnostico TEXT,
+            observaciones TEXT,
+            FOREIGN KEY (historia_id) REFERENCES historias_clinicas(id)
+        );
+        ''')
+
+        # Tabla de Tratamientos (detallado)
+        cursor.execute('''
+        CREATE TABLE IF NOT EXISTS tratamientos_detalle (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            historia_id INTEGER NOT NULL,
+            tratamiento TEXT,
+            observaciones TEXT,
+            FOREIGN KEY (historia_id) REFERENCES historias_clinicas(id)
+        );
         ''')
 
         # Índices para mejorar el rendimiento de las consultas

@@ -1,5 +1,6 @@
 import flet as ft
 import time
+from datetime import datetime
 from controllers.patient_controller import PatientController
 
 def patients_view(page: ft.Page):
@@ -36,7 +37,25 @@ def patients_view(page: ft.Page):
     direccion_input = ft.TextField(label="Dirección *", width=250)
     documento_input = ft.TextField(label="Documento *", width=150)
     telefono_input = ft.TextField(label="Teléfono *", width=150)
-    fecha_nacimiento_input = ft.TextField(label="Fecha nacimiento * (YYYY-MM-DD)", width=150)
+
+    # DatePicker para la fecha de nacimiento
+    def change_date(e):
+        fecha_nacimiento_input.value = e.control.value.strftime("%Y-%m-%d")
+        page.update()
+
+    date_picker = ft.DatePicker(
+        first_date=datetime(1900, 1, 1),
+        last_date=datetime.today(),
+        on_change=change_date
+    )
+    page.overlay.append(date_picker)
+    fecha_nacimiento_input = ft.TextField(label="Fecha de nacimiento * (YYYY-MM-DD)", width=200, read_only=True)
+    date_picker_button = ft.ElevatedButton(
+        "Seleccionar Fecha",
+        icon=ft.Icons.CALENDAR_MONTH,
+        on_click=lambda e: page.open(date_picker)
+    )
+
     estado_civil_input = ft.Dropdown(
         label="Estado civil",
         width=150,
@@ -167,9 +186,6 @@ def patients_view(page: ft.Page):
             documento_input.value = patient[5]             # documento
             telefono_input.value = patient[13]             # telefono
             fecha_nacimiento_input.value = patient[14]     # fecha_nacimiento
-            # Puedes asignar estado_civil y afiliado si son editables:
-            # estado_civil_input.value = patient[15]
-            # afiliado_input.value = patient[16]
             sexo_input.value = patient[17]                 # sexo
             alergia_input.value = patient[18]              # alergia
             correo_input.value = patient[19]               # correo
@@ -218,7 +234,7 @@ def patients_view(page: ft.Page):
                     ft.Row([hospital_nacimiento_input, pais_input, departamento_input], spacing=10),
                     ft.Row([provincia_input, distrito_input], spacing=10),
                     ft.Row([direccion_input, documento_input], spacing=10),
-                    ft.Row([telefono_input, fecha_nacimiento_input], spacing=10),
+                    ft.Row([telefono_input, fecha_nacimiento_input, date_picker_button], spacing=10),
                     ft.Row([estado_civil_input, afiliado_input], spacing=10),
                     ft.Row([sexo_label, sexo_input, estado_input], spacing=10),
                     ft.Row([alergia_input, correo_input], spacing=10),

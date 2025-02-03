@@ -1,16 +1,25 @@
 import flet as ft
 import time
 from controllers.doctor_controller import DoctorController
+from controllers.specialty_controller import SpecialtyController
 
 def doctors_view(page: ft.Page):
     controller = DoctorController()
+    specialty_controller = SpecialtyController()
     selected_doctor_id = None
     current_date = time.strftime("%Y-%m-%d")
+
+    # Obtener las especialidades desde la base de datos
+    specialties = specialty_controller.load_specialties()
 
     # Definir los inputs para el formulario de registro de odontólogos
     nombres_input = ft.TextField(label="Nombres *", width=200)
     apellidos_input = ft.TextField(label="Apellidos *", width=200)
-    especialidad_input = ft.TextField(label="Especialidad *", width=200)
+    especialidad_input = ft.Dropdown(
+        label="Especialidad *", 
+        width=200,
+        options=[ft.dropdown.Option(str(sp[0]), text=sp[1]) for sp in specialties],  # Mostrar ID y nombre
+    )
     tipo_documento_input = ft.Dropdown(
         label="Tipo Documento",
         width=150,
@@ -61,17 +70,18 @@ def doctors_view(page: ft.Page):
     )
 
     def refresh_table():
+        """Actualiza la tabla con los doctores actuales."""
         doctors = controller.load_doctors()
         table.rows = [
             ft.DataRow(
                 cells=[
-                    ft.DataCell(ft.Text(str(doc[0]))),
-                    ft.DataCell(ft.Text(f"{doc[1]} {doc[2]}")),
-                    ft.DataCell(ft.Text(doc[3])),
-                    ft.DataCell(ft.Text(doc[5] or "")),
-                    ft.DataCell(ft.Text(doc[11])),
-                    ft.DataCell(ft.Text(doc[9])),
-                    ft.DataCell(ft.Text(doc[14])),
+                    ft.DataCell(ft.Text(str(doc[0]))),  # ID
+                    ft.DataCell(ft.Text(f"{doc[1]} {doc[2]}")),  # Nombre completo
+                    ft.DataCell(ft.Text(doc[3])),  # Especialidad
+                    ft.DataCell(ft.Text(doc[5])),  # Número de documento
+                    ft.DataCell(ft.Text(doc[10])),  # Teléfono
+                    ft.DataCell(ft.Text(doc[9])),  # Fecha de registro
+                    ft.DataCell(ft.Text(doc[14])),  # Estado
                     ft.DataCell(
                         ft.Row([
                             ft.IconButton(icon=ft.Icons.EDIT, on_click=lambda e, id=doc[0]: load_doctor_to_edit(id)),
@@ -97,51 +107,32 @@ def doctors_view(page: ft.Page):
             page.update()
             return
 
+        data = (
+            nombres_input.value,
+            apellidos_input.value,
+            int(especialidad_input.value),  # Convertir a entero (especialidad_id)
+            tipo_documento_input.value,
+            nro_documento_input.value,
+            ruc_input.value,
+            direccion_input.value,
+            colegiatura_input.value,
+            current_date,
+            fecha_nacimiento_input.value,
+            telefono_input.value,
+            celular_input.value,
+            sexo_input.value,
+            estado_input.value,
+            correo_input.value,
+            foto_input.value,
+            usuario_input.value,
+            password_input.value
+        )
+
         if selected_doctor_id:
-            # Para actualizar, no incluimos la fecha de registro
-            data = (
-                nombres_input.value,
-                apellidos_input.value,
-                especialidad_input.value,
-                tipo_documento_input.value,
-                nro_documento_input.value,
-                ruc_input.value,
-                direccion_input.value,
-                colegiatura_input.value,
-                fecha_nacimiento_input.value,
-                telefono_input.value,
-                celular_input.value,
-                sexo_input.value,
-                estado_input.value,
-                correo_input.value,
-                foto_input.value,
-                usuario_input.value,
-                password_input.value
-            )
             controller.update_doctor(selected_doctor_id, data)
         else:
-            # Para insertar, incluimos la fecha de registro actual
-            data = (
-                nombres_input.value,
-                apellidos_input.value,
-                especialidad_input.value,
-                tipo_documento_input.value,
-                nro_documento_input.value,
-                ruc_input.value,
-                direccion_input.value,
-                colegiatura_input.value,
-                current_date,
-                fecha_nacimiento_input.value,
-                telefono_input.value,
-                celular_input.value,
-                sexo_input.value,
-                estado_input.value,
-                correo_input.value,
-                foto_input.value,
-                usuario_input.value,
-                password_input.value
-            )
             controller.add_doctor(data)
+
         clear_inputs()
         refresh_table()
 
@@ -152,13 +143,12 @@ def doctors_view(page: ft.Page):
         if doctor:
             nombres_input.value = doctor[1]
             apellidos_input.value = doctor[2]
-            especialidad_input.value = doctor[3]
+            especialidad_input.value = str(doctor[3])  # Convertir a string (especialidad_id)
             tipo_documento_input.value = doctor[4]
             nro_documento_input.value = doctor[5]
             ruc_input.value = doctor[6]
             direccion_input.value = doctor[7]
             colegiatura_input.value = doctor[8]
-            # No se edita la fecha de registro (doctor[9])
             fecha_nacimiento_input.value = doctor[10]
             telefono_input.value = doctor[11]
             celular_input.value = doctor[12]

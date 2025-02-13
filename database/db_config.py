@@ -21,6 +21,56 @@ def create_tables():
         )
         ''')
 
+        #Tabla de Tipos de Documento
+        cursor.execute('''
+        CREATE TABLE IF NOT EXISTS document_types (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL UNIQUE
+        )
+        ''')
+
+        # 🛠 Verificar si los tipos de documentos ya existen antes de insertarlos
+        cursor.execute("SELECT COUNT(*) FROM document_types")
+        count = cursor.fetchone()[0]
+        if count == 0:
+            cursor.executemany(
+                "INSERT INTO document_types (name) VALUES (?)",
+                [('DNI',), ('Carné de Extranjería',), ('Pasaporte',), ('RUC',)]
+            )
+
+
+        # Tabla de Niveles de Educación
+        cursor.execute('''
+        CREATE TABLE IF NOT EXISTS education_levels (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            level TEXT NOT NULL UNIQUE
+        )
+        ''')
+        # 🛠 Verificar si los tipos de documentos ya existen antes de insertarlos
+        cursor.execute("SELECT COUNT(*) FROM education_levels")
+        count = cursor.fetchone()[0]
+        if count == 0:
+            cursor.executemany(
+                "INSERT INTO education_levels(level) VALUES (?)",
+                [('INICIAL',), ('PRIMARIA',), ('SECUNDARIA',), ('UNIVERSITARIA',), ('SUPERIOR',)]
+            )
+
+        # Tabla de Estados Civiles
+        cursor.execute('''
+        CREATE TABLE IF NOT EXISTS marital_status (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            status TEXT NOT NULL UNIQUE
+        )
+        ''')
+        # 🛠 Verificar si los estados civiles ya existen antes de insertarlos
+        cursor.execute("SELECT COUNT(*) FROM marital_status")
+        count = cursor.fetchone()[0]
+        if count == 0:
+            cursor.executemany(
+                "INSERT INTO marital_status(status) VALUES (?)",
+                [('SOLTERO',), ('CASADO',), ('VIUDO',), ('DIVORCIADO',)]
+            )
+
         # Tabla de Doctores (Odontólogos) con campos extendidos para Perú
         cursor.execute('''
         CREATE TABLE IF NOT EXISTS doctors (
@@ -28,22 +78,21 @@ def create_tables():
             nombres TEXT NOT NULL,
             apellidos TEXT NOT NULL,
             especialidad_id INTEGER,
-            tipo_documento TEXT,
-            nro_documento TEXT,
+            tipo_documento_id INTEGER,
+            nro_documento TEXT NOT NULL,
             ruc TEXT,
             direccion TEXT,
             colegiatura TEXT,
             fecha_registro TEXT,
-            fecha_nacimiento TEXT,
-            telefono TEXT,
+            fecha_nacimiento TEXT NOT NULL,
             celular TEXT,
             sexo TEXT,
             estado TEXT,
             correo TEXT,
             foto TEXT,
-            usuario TEXT UNIQUE,
-            password TEXT,
-            FOREIGN KEY (especialidad_id) REFERENCES specialties(id)
+            is_deleted INTEGER DEFAULT 0,
+            FOREIGN KEY (especialidad_id) REFERENCES specialties(id),
+            FOREIGN KEY (tipo_documento_id) REFERENCES document_types(id)
         )
         ''')
 
@@ -56,12 +105,13 @@ def create_tables():
         cursor.execute('''
         CREATE TABLE IF NOT EXISTS patients (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            history_number TEXT, -- Número de historia clínica (se generará automáticamente)
+            history_number TEXT UNIQUE  ,
             nombres TEXT NOT NULL,
             apellidos TEXT NOT NULL,
             edad INTEGER,
-            documento TEXT,
-            grado_instruccion TEXT,
+            tipo_documento_id INTEGER,
+            nro_documento TEXT NOT NULL UNIQUE,
+            grado_instruccion_id INTEGER,
             hospital_nacimiento TEXT,
             pais TEXT,
             departamento TEXT,
@@ -69,27 +119,21 @@ def create_tables():
             distrito TEXT,
             direccion TEXT,
             telefono TEXT,
-            fecha_nacimiento TEXT,
-            estado_civil TEXT,
+            fecha_nacimiento TEXT NOT NULL,
+            estado_civil_id INTEGER,
             afiliado TEXT,
             sexo TEXT,
             alergia TEXT,
             correo TEXT,
             observacion TEXT,
-            fecha_registro TEXT,
+            fecha_registro TEXT DEFAULT CURRENT_TIMESTAMP,
             estado TEXT,
-            is_deleted INTEGER DEFAULT 0
+            is_deleted INTEGER DEFAULT 0,
+            FOREIGN KEY (tipo_documento_id) REFERENCES document_types(id),
+            FOREIGN KEY (grado_instruccion_id) REFERENCES education_levels(id),
+            FOREIGN KEY (estado_civil_id) REFERENCES marital_status(id),
+            FOREIGN KEY (history_number) REFERENCES historias_clinicas(numero_historia)
         )
-        ''')
-
-        # Crear trigger para asignar history_number automáticamente al insertar un paciente
-        cursor.execute('''
-        CREATE TRIGGER IF NOT EXISTS set_history_number AFTER INSERT ON patients
-        BEGIN
-            UPDATE patients
-            SET history_number = NEW.fecha_registro || '-' || NEW.id
-            WHERE id = NEW.id;
-        END;
         ''')
 
         # Tabla de Citas
@@ -102,12 +146,28 @@ def create_tables():
             time TEXT NOT NULL,
             duration INTEGER,
             notes TEXT,
-            status TEXT DEFAULT 'Pending',
+            status_id INTEGER DEFAULT 1,
             is_deleted INTEGER DEFAULT 0,
+            FOREIGN KEY(status_id) REFERENCES appointment_status(id),
             FOREIGN KEY(patient_id) REFERENCES patients(id),
             FOREIGN KEY(doctor_id) REFERENCES doctors(id)
         )
         ''')
+
+        # Tabla de estado de las Citas (Pending, Completed, Cancelled)
+        cursor.execute('''
+        CREATE TABLE IF NOT EXISTS appointment_status (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL UNIQUE
+        );
+        ''')
+
+        # Verificar si ya existen los valores en la tabla de estados de citas
+        cursor.execute("SELECT COUNT(*) FROM appointment_status WHERE name IN ('Pending', 'Completed', 'Cancelled')")
+        count = cursor.fetchone()[0]
+        # insertamos los estados de las citas
+        if count == 0:
+            cursor.execute("INSERT INTO appointment_status (name) VALUES ('Pending'), ('Completed'), ('Cancelled')")
 
         # Tabla de Tratamientos
         cursor.execute('''
@@ -268,20 +328,9 @@ def create_tables():
         CREATE TABLE IF NOT EXISTS specialties (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             nombre TEXT NOT NULL UNIQUE,
-            codigo INTEGER UNIQUE,  -- Se generará automáticamente
             descripcion TEXT,
             estado TEXT DEFAULT 'Activo'
         );
-        ''')
-
-        # Trigger para asignar el código automáticamente si no se proporciona
-        cursor.execute('''
-        CREATE TRIGGER IF NOT EXISTS set_specialty_codigo AFTER INSERT ON specialties
-        BEGIN
-            UPDATE specialties
-            SET codigo = (SELECT COALESCE(MAX(codigo), 0) + 1 FROM specialties)
-            WHERE id = NEW.id AND NEW.codigo IS NULL;
-        END;
         ''')
 
         # Tabla de Historias Clínicas
@@ -381,6 +430,7 @@ def create_tables():
             FOREIGN KEY (historia_id) REFERENCES historias_clinicas(id)
         );
         ''')
+
 
         # Índices para mejorar el rendimiento de las consultas
         cursor.execute('CREATE INDEX IF NOT EXISTS idx_patient_id ON appointments(patient_id)')

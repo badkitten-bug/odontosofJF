@@ -1,312 +1,150 @@
 import flet as ft
 from views.patient_view import patients_view
 from views.doctor_view import doctors_view
-from views.appointment_view import appointments_view
+from views.appointment_schedule_view import appointment_schedule_view
+from views.appointment_management_view import appointment_management_view
 from views.specialty_view import specialty_view
+from views.treatment_materials_view import treatment_materials_view
 from views.historia_view import historia_view
 
 class MenuController:
     def __init__(self, page: ft.Page):
         self.page = page
 
-    # -------------------------
-    # Vistas principales
-    # -------------------------
-    def show_registro_view(self, dc: ft.Column):
-        dc.controls = [
-            ft.Text("Registro", size=20, weight="bold"),
-            ft.ElevatedButton("Paciente", on_click=lambda _: self.show_patients_view(dc)),
-            ft.ElevatedButton("Odontólogo", on_click=lambda _: self.show_doctors_view(dc))
-        ]
-        self.page.update()
-
-    def show_patients_view(self, dc: ft.Column):
-        dc.controls = [
-            ft.Text("Registro de Pacientes", size=20, weight="bold"),
-            patients_view(self.page)
-        ]
-        self.page.update()
-
-    def show_doctors_view(self, dc: ft.Column):
-        dc.controls = [
-            ft.Text("Registro de Odontólogos", size=20, weight="bold"),
-            doctors_view(self.page)
-        ]
-        self.page.update()
-
-    def show_citas_view(self, dc: ft.Column):
-        dc.controls = [
-            ft.Text("Citas", size=20, weight="bold"),
-            appointments_view(self.page)
-        ]
-        self.page.update()
-
-    def show_historia_clinica_view(self, dc: ft.Column):
-        dc.controls = [
-            ft.Text("Historia Clínica - Movimiento", size=20, weight="bold"),
-            historia_view(self.page)
-        ]
-        self.page.update()
-
-    def show_specialty_view(self, dc: ft.Column):
-        dc.controls = [
-            ft.Text("Gestión de Especialidades", size=20, weight="bold"),
-            specialty_view(self.page)
-        ]
-        self.page.update()
-
-    def show_tratamientos_view(self, dc: ft.Column):
-        dc.controls = [
-            ft.Text("Tratamientos", size=20, weight="bold"),
-            ft.ElevatedButton("Registrar", on_click=lambda _: self.treatments_register_view(dc)),
-            ft.ElevatedButton("Comprobantes", on_click=lambda _: self.treatments_comprobantes_view(dc))
-        ]
-        self.page.update()
-
-    def treatments_register_view(self, dc: ft.Column):
-        dc.controls = [
-            ft.Text("Registrar Tratamiento", size=20, weight="bold"),
-            ft.Text("Formulario para registrar tratamiento...")
-        ]
-        self.page.update()
-
-    def treatments_comprobantes_view(self, dc: ft.Column):
-        dc.controls = [
-            ft.Text("Comprobantes de Tratamientos", size=20, weight="bold"),
-            ft.Text("Vista de comprobantes...")
-        ]
-        self.page.update()
-
-    def show_reportes_view(self, dc: ft.Column):
-        dc.controls = [
-            ft.Text("Reportes", size=20, weight="bold"),
-            ft.ElevatedButton("Tratamientos Cobrados", on_click=lambda _: self.reportes_tratamientos_cobrados_view(dc))
-        ]
-        self.page.update()
-
-    def reportes_tratamientos_cobrados_view(self, dc: ft.Column):
-        dc.controls = [
-            ft.Text("Tratamientos Cobrados", size=20, weight="bold"),
-            ft.Text("Vista de tratamientos cobrados...")
-        ]
-        self.page.update()
-
-    def show_procedimientos_view(self, dc: ft.Column):
-        dc.controls = [
-            ft.Text("Procedimientos", size=20, weight="bold"),
-            ft.ElevatedButton("Tarifario", on_click=lambda _: self.procedimientos_tarifario_view(dc)),
-            ft.ElevatedButton("Diagnóstico", on_click=lambda _: self.procedimientos_diagnostico_view(dc))
-        ]
-        self.page.update()
-
-    def procedimientos_tarifario_view(self, dc: ft.Column):
-        dc.controls = [
-            ft.Text("Tarifario", size=20, weight="bold"),
-            ft.Text("Vista del tarifario...")
-        ]
-        self.page.update()
-
-    def procedimientos_diagnostico_view(self, dc: ft.Column):
-        dc.controls = [
-            ft.Text("Diagnóstico", size=20, weight="bold"),
-            ft.Text("Vista de diagnóstico...")
-        ]
-        self.page.update()
-
-    def show_mantenimiento_view(self, dc: ft.Column):
-        dc.controls = [
-            ft.Text("Mantenimiento", size=20, weight="bold"),
-            ft.ElevatedButton("Tipo pago", on_click=lambda _: self.mantenimiento_tipo_pago_view(dc)),
-            ft.ElevatedButton("Moneda", on_click=lambda _: self.mantenimiento_moneda_view(dc)),
-            ft.ElevatedButton("Banco", on_click=lambda _: self.mantenimiento_banco_view(dc)),
-            ft.ElevatedButton("Tipo tarjeta", on_click=lambda _: self.mantenimiento_tipo_tarjeta_view(dc))
-        ]
-        self.page.update()
-
-    def mantenimiento_tipo_pago_view(self, dc: ft.Column):
-        dc.controls = [
-            ft.Text("Tipo de Pago", size=20, weight="bold"),
-            ft.Text("Vista de tipo de pago...")
-        ]
-        self.page.update()
-
-    def mantenimiento_moneda_view(self, dc: ft.Column):
-        dc.controls = [
-            ft.Text("Moneda", size=20, weight="bold"),
-            ft.Text("Vista de moneda...")
-        ]
-        self.page.update()
-
-    def mantenimiento_banco_view(self, dc: ft.Column):
-        dc.controls = [
-            ft.Text("Banco", size=20, weight="bold"),
-            ft.Text("Vista de banco...")
-        ]
-        self.page.update()
-
-    def mantenimiento_tipo_tarjeta_view(self, dc: ft.Column):
-        dc.controls = [
-            ft.Text("Tipo de Tarjeta", size=20, weight="bold"),
-            ft.Text("Vista de tipo de tarjeta...")
-        ]
-        self.page.update()
-
-    def show_catalogo_view(self, dc: ft.Column):
-        dc.controls = [
-            ft.Text("Catálogo", size=20, weight="bold"),
-            ft.ElevatedButton("Unidad medida", on_click=lambda _: self.catalogo_unidad_medida_view(dc)),
-            ft.ElevatedButton("Tipo concepto", on_click=lambda _: self.catalogo_tipo_concepto_view(dc)),
-            ft.ElevatedButton("Categoría", on_click=lambda _: self.catalogo_categoria_view(dc)),
-            ft.ElevatedButton("Especialidad", on_click=lambda _: self.catalogo_especialidad_view(dc)),
-            ft.ElevatedButton("Especialidades", on_click=lambda _: self.show_specialty_view(dc)),
-            ft.ElevatedButton("Tipo citado", on_click=lambda _: self.catalogo_tipo_citado_view(dc)),
-            ft.ElevatedButton("Alergia", on_click=lambda _: self.catalogo_alergia_view(dc))
-        ]
-        self.page.update()
-
-    def catalogo_unidad_medida_view(self, dc: ft.Column):
-        dc.controls = [
-            ft.Text("Unidad de Medida", size=20, weight="bold"),
-            ft.Text("Vista de unidad de medida...")
-        ]
-        self.page.update()
-
-    def catalogo_tipo_concepto_view(self, dc: ft.Column):
-        dc.controls = [
-            ft.Text("Tipo de Concepto", size=20, weight="bold"),
-            ft.Text("Vista de tipo de concepto...")
-        ]
-        self.page.update()
-
-    def catalogo_categoria_view(self, dc: ft.Column):
-        dc.controls = [
-            ft.Text("Categoría", size=20, weight="bold"),
-            ft.Text("Vista de categoría...")
-        ]
-        self.page.update()
-
-    def catalogo_especialidad_view(self, dc: ft.Column):
-        dc.controls = [
-            ft.Text("Especialidad", size=20, weight="bold"),
-            ft.Text("Vista de especialidad...")
-        ]
-        self.page.update()
-
-    def catalogo_tipo_citado_view(self, dc: ft.Column):
-        dc.controls = [
-            ft.Text("Tipo de Citado", size=20, weight="bold"),
-            ft.Text("Vista de tipo de citado...")
-        ]
-        self.page.update()
-
-    def catalogo_alergia_view(self, dc: ft.Column):
-        dc.controls = [
-            ft.Text("Alergia", size=20, weight="bold"),
-            ft.Text("Vista de alergia...")
-        ]
-        self.page.update()
-
-    def show_gestion_usuarios_view(self, dc: ft.Column):
-        dc.controls = [
-            ft.Text("Gestión de Usuarios", size=20, weight="bold"),
-            ft.ElevatedButton("Usuarios", on_click=lambda _: self.usuarios_view(dc)),
-            ft.ElevatedButton("Roles", on_click=lambda _: self.roles_view(dc)),
-            ft.ElevatedButton("Permisos", on_click=lambda _: self.permisos_view(dc))
-        ]
-        self.page.update()
-
-    def usuarios_view(self, dc: ft.Column):
-        dc.controls = [
-            ft.Text("Usuarios", size=20, weight="bold"),
-            ft.Text("Vista de usuarios...")
-        ]
-        self.page.update()
-
-    def roles_view(self, dc: ft.Column):
-        dc.controls = [
-            ft.Text("Roles", size=20, weight="bold"),
-            ft.Text("Vista de roles...")
-        ]
-        self.page.update()
-
-    def permisos_view(self, dc: ft.Column):
-        dc.controls = [
-            ft.Text("Permisos", size=20, weight="bold"),
-            ft.Text("Vista de permisos...")
-        ]
-        self.page.update()
-
-    def show_configuracion_view(self, dc: ft.Column):
-        dc.controls = [
-            ft.Text("Configuración", size=20, weight="bold"),
-            ft.ElevatedButton("Mi Clínica", on_click=lambda _: self.clinica_view(dc)),
-            ft.ElevatedButton("Tipo documento", on_click=lambda _: self.tipo_documento_view(dc))
-        ]
-        self.page.update()
-
-    def clinica_view(self, dc: ft.Column):
-        dc.controls = [
-            ft.Text("Mi Clínica", size=20, weight="bold"),
-            ft.Text("Vista de configuración de la clínica...")
-        ]
-        self.page.update()
-
-    def tipo_documento_view(self, dc: ft.Column):
-        dc.controls = [
-            ft.Text("Tipo Documento", size=20, weight="bold"),
-            ft.Text("Vista de tipos de documento...")
-        ]
-        self.page.update()
-
-    # -------------------------
-    # Vista principal del menú
-    # -------------------------
     def show_menu_view(self):
+        """Vista principal del menú lateral con contenido dinámico."""
+
+        # Contenedor dinámico para el contenido
         dynamic_content = ft.Column(
             [ft.Text("Selecciona una opción del menú.", size=20)],
             expand=True,
-            scroll=ft.ScrollMode.AUTO
+            scroll=ft.ScrollMode.AUTO,
         )
 
+        # Función para actualizar el contenido del contenedor dinámico
         def update_content(index: int):
             mapping = {
-                0: lambda dc: self.show_registro_view(dc),
-                1: lambda dc: self.show_citas_view(dc),
-                2: lambda dc: self.show_tratamientos_view(dc),
-                3: lambda dc: self.show_historia_clinica_view(dc),
-                4: lambda dc: self.show_reportes_view(dc),
-                5: lambda dc: self.show_procedimientos_view(dc),
-                6: lambda dc: self.show_mantenimiento_view(dc),
-                7: lambda dc: self.show_catalogo_view(dc),
-                8: lambda dc: self.show_gestion_usuarios_view(dc),
-                9: lambda dc: self.show_configuracion_view(dc),
+                0: lambda: self.show_patients_view(dynamic_content),
+                1: lambda: self.show_doctors_view(dynamic_content),
+                2: lambda: self.show_appointments_menu(dynamic_content),  # Cambiado para mostrar el menú de citas
+                3: lambda: self.show_treatments_view(dynamic_content),
+                4: lambda: self.show_historia_clinica_view(dynamic_content),
+                5: lambda: self.show_catalogs_view(dynamic_content),
             }
-            mapping.get(index, lambda dc: dc.controls.append(ft.Text("Opción no implementada", size=20)))(dynamic_content)
+
+            # Obtener acción del mapeo o función de respaldo
+            action = mapping.get(index, lambda: dynamic_content.controls.append(ft.Text("Opción no implementada")))
+            action()  # Ejecutar la acción
             self.page.update()
 
+        # Configurar el menú lateral (NavigationRail)
         rail = ft.NavigationRail(
             selected_index=0,
             label_type=ft.NavigationRailLabelType.ALL,
-            min_width=120,
-            min_extended_width=150,
-            leading=ft.FloatingActionButton(icon=ft.Icons.CREATE, text="Add"),
+            min_width=72,
+            min_extended_width=200,
             group_alignment=-0.9,
             destinations=[
-                ft.NavigationRailDestination(icon=ft.Icons.CREATE, label="Registro"),
+                ft.NavigationRailDestination(icon=ft.Icons.PEOPLE, label="Pacientes"),
+                ft.NavigationRailDestination(icon=ft.Icons.PERSON, label="Odontólogos"),
                 ft.NavigationRailDestination(icon=ft.Icons.EVENT, label="Citas"),
                 ft.NavigationRailDestination(icon=ft.Icons.MEDICATION, label="Tratamientos"),
-                ft.NavigationRailDestination(icon=ft.Icons.HISTORY, label="Historia"),
-                ft.NavigationRailDestination(icon=ft.Icons.PAYMENT, label="Reportes"),
-                ft.NavigationRailDestination(icon=ft.Icons.DESCRIPTION, label="Procedimientos"),
-                ft.NavigationRailDestination(icon=ft.Icons.SETTINGS, label="Mantenimiento"),
-                ft.NavigationRailDestination(icon=ft.Icons.CATEGORY, label="Catálogo"),
-                ft.NavigationRailDestination(icon=ft.Icons.PERSON, label="Gestión"),
-                ft.NavigationRailDestination(icon=ft.Icons.SETTINGS, label="Configuración"),
+                ft.NavigationRailDestination(icon=ft.Icons.HISTORY, label="Historias Clínicas"),
+                ft.NavigationRailDestination(icon=ft.Icons.CATEGORY, label="Catálogos"),
             ],
             on_change=lambda e: update_content(e.control.selected_index),
         )
 
+        # Agregar menú lateral y contenedor dinámico a la vista principal
         self.page.views.append(
-            ft.View("/menu", controls=[ft.Row([rail, ft.VerticalDivider(width=1), dynamic_content], expand=True)])
+            ft.View(
+                "/menu",
+                controls=[ft.Row([rail, ft.VerticalDivider(width=1), dynamic_content], expand=True)],
+            )
+        )
+        self.page.update()
+
+    def show_patients_view(self, dynamic_content: ft.Column):
+        dynamic_content.controls.clear()
+        dynamic_content.controls.append(ft.Text("Pacientes", size=20, weight="bold"))
+        dynamic_content.controls.append(patients_view(self.page))
+        self.page.update()
+
+    def show_doctors_view(self, dynamic_content: ft.Column):
+        dynamic_content.controls.clear()
+        dynamic_content.controls.append(ft.Text("Odontólogos", size=20, weight="bold"))
+        dynamic_content.controls.append(doctors_view(self.page))
+        self.page.update()
+
+    def show_appointments_menu(self, dynamic_content: ft.Column):
+        """Menú para manejar citas"""
+        def load_schedule_view():
+            dynamic_content.controls.clear()
+            dynamic_content.controls.append(ft.Text("Agendar Citas", size=20, weight="bold"))
+            dynamic_content.controls.append(appointment_schedule_view(self.page))
+            self.page.update()
+
+        def load_management_view():
+            dynamic_content.controls.clear()
+            dynamic_content.controls.append(ft.Text("Gestión de Citas", size=20, weight="bold"))
+            dynamic_content.controls.append(appointment_management_view(self.page))
+            self.page.update()
+
+        # Opciones para citas
+        dynamic_content.controls.clear()
+        dynamic_content.controls.append(ft.Text("Opciones de Citas", size=20, weight="bold"))
+        dynamic_content.controls.append(
+            ft.ElevatedButton("Agendar Citas", on_click=lambda _: load_schedule_view())
+        )
+        dynamic_content.controls.append(
+            ft.ElevatedButton("Gestionar Citas", on_click=lambda _: load_management_view())
+        )
+        self.page.update()
+
+    def show_treatments_view(self, dynamic_content: ft.Column):
+        dynamic_content.controls.clear()
+        dynamic_content.controls.append(ft.Text("Gestión de Tratamientos", size=20, weight="bold"))
+        dynamic_content.controls.append(treatment_materials_view(self.page))
+        self.page.update()
+
+    def show_historia_clinica_view(self, dynamic_content: ft.Column):
+        dynamic_content.controls.clear()
+        dynamic_content.controls.append(ft.Text("Historias Clínicas", size=20, weight="bold"))
+        dynamic_content.controls.append(historia_view(self.page))
+        self.page.update()
+
+    def show_catalogs_view(self, dynamic_content: ft.Column):
+        """Menú de opciones para la sección Especialidades."""
+
+        def load_specialties():
+            dynamic_content.controls.clear()
+            dynamic_content.controls.append(ft.Text("GesGestión de Especialidades", size=20, weight="bold"))
+            dynamic_content.controls.append(specialty_view(self.page))
+            self.page.update()
+
+        def load_treatments():
+            dynamic_content.controls.clear()
+            dynamic_content.controls.append(ft.Text("Gestión de Tratamientos", size=20, weight="bold"))
+            dynamic_content.controls.append(treatment_materials_view(self.page))
+            self.page.update()
+        
+        def load_doctor_schedules():
+            dynamic_content.controls.clear()
+            dynamic_content.controls.append(ft.Text("Gestión de Horarios de Doctores", size=20, weight="bold"))
+            from views.doctor_schedule_view import doctor_schedule_view  # Importación dentro para evitar conflictos
+            dynamic_content.controls.append(doctor_schedule_view(self.page))
+            self.page.update()
+
+       # Controles del menú de catálogos
+        dynamic_content.controls.clear()
+        dynamic_content.controls.append(ft.Text("Opciones de Catálogos", size=20, weight="bold"))
+        dynamic_content.controls.append(
+            ft.ElevatedButton("Gestión de Especialidades", on_click=lambda _: load_specialties())
+        )
+        dynamic_content.controls.append(
+            ft.ElevatedButton("Gestión de Tratamientos", on_click=lambda _: load_treatments())
+        )
+        dynamic_content.controls.append(
+            ft.ElevatedButton("Gestión de Horarios de Doctores", on_click=lambda _: load_doctor_schedules())
         )
         self.page.update()

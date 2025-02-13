@@ -1,4 +1,4 @@
-from models.patient import PatientModel
+from models.patient_model import PatientModel
 
 class PatientController:
     def __init__(self):
@@ -6,6 +6,9 @@ class PatientController:
 
     def load_patients(self):
         return self.model.load_patients()
+
+    def get_patient_by_id(self, patient_id):
+        return self.model.get_patient_by_id(patient_id)
 
     def add_patient(self, data):
         self.model.add_patient(data)
@@ -16,5 +19,11 @@ class PatientController:
     def delete_patient(self, patient_id):
         self.model.delete_patient(patient_id)
 
-    def get_patient_by_id(self, patient_id):
-        return self.model.get_patient_by_id(patient_id)
+    def load_education_levels(self):
+        return self.model.load_education_levels()
+
+    def load_marital_statuses(self):
+        return self.model.load_marital_statuses()
+
+    def load_document_types(self):
+        return self.model.load_document_types()

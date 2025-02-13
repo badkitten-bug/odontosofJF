@@ -1,4 +1,4 @@
-from models.appointment import AppointmentModel
+from models.appointment_model import AppointmentModel
 
 class AppointmentController:
     def __init__(self):
@@ -12,9 +12,18 @@ class AppointmentController:
 
     def load_specialties(self):
         return self.model.load_specialties()
+    
+    def load_appointment_statuses(self):
+        return self.model.load_appointment_statuses()
 
     def load_appointments(self, date=None, doctor_id=None, specialty_id=None, status=None):
         return self.model.load_appointments(date, doctor_id, specialty_id, status)
+    
+    def load_available_slots(self, date, doctor_id):
+        return self.model.load_available_slots(date, doctor_id)
+
+    def create_appointment(self, data):
+        self.model.create_appointment(data)
 
     def save_appointment(self, appointment_id, data):
         if appointment_id:

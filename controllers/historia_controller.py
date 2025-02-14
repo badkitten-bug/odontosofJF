@@ -14,6 +14,9 @@ class HistoriaController:
         """Obtiene una historia clínica específica para edición"""
         return self.model.get_historia_by_id(historia_id)
 
+    def obtener_historias_clinicas(self, fecha_desde=None, fecha_hasta=None, nombre_paciente=None):
+        return self.model.get_historias_clinicas(fecha_desde, fecha_hasta, nombre_paciente)
+
     def update_historia(self, historia_id, observaciones, exploracion_fisica, odontograma, diagnostico, evolucion, examenes_auxiliares, tratamientos_realizados, notas, adjuntos):
         """Actualiza una historia clínica con todos sus campos"""
         return self.model.update_historia(historia_id, observaciones, exploracion_fisica, odontograma, diagnostico, evolucion, examenes_auxiliares, tratamientos_realizados, notas, adjuntos)

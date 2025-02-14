@@ -124,3 +124,26 @@ class PatientModel:
             cursor = conn.cursor()
             cursor.execute("SELECT id, name FROM document_types")
             return cursor.fetchall()
+
+    @staticmethod
+    def add_patient(data):
+        """Agrega un nuevo paciente y le asigna automáticamente un número de historia clínica."""
+        try:
+            history_number = PatientModel.generate_history_number()  # Generar número de historia clínica
+            
+            with connect_db() as conn:
+                cursor = conn.cursor()
+                cursor.execute("""
+                    INSERT INTO patients (
+                        history_number, nombres, apellidos, edad, tipo_documento_id, nro_documento,
+                        grado_instruccion_id, hospital_nacimiento, direccion, telefono,
+                        fecha_nacimiento, estado_civil_id, afiliado, sexo, correo,
+                        observacion, fecha_registro, estado
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (history_number, *data))
+                conn.commit()
+                return cursor.lastrowid  # Retorna el ID generado
+        except Exception as e:
+            print(f"Error al agregar paciente: {e}")
+            conn.rollback()
+            return None

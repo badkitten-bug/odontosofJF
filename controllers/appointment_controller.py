@@ -36,3 +36,13 @@ class AppointmentController:
 
     def delete_appointment(self, appointment_id):
         self.model.delete_appointment(appointment_id)
+    
+    # Nuevo método para cargar doctores por especialidad
+    def load_doctors_by_specialty(self, specialty_id):
+        return self.model.load_doctors_by_specialty(specialty_id)
+
+    def get_doctor_schedule(self, doctor_id, day_of_week):
+        return self.model.get_doctor_schedule(doctor_id, day_of_week)
+
+    def get_booked_slots(self, doctor_id, date):
+        return self.model.get_booked_slots(doctor_id, date)

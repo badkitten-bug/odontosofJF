@@ -21,15 +21,13 @@ def create_tables():
         )
         ''')
 
-        #Tabla de Tipos de Documento
+        # Tabla de Tipos de Documento
         cursor.execute('''
         CREATE TABLE IF NOT EXISTS document_types (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT NOT NULL UNIQUE
         )
         ''')
-
-        # 🛠 Verificar si los tipos de documentos ya existen antes de insertarlos
         cursor.execute("SELECT COUNT(*) FROM document_types")
         count = cursor.fetchone()[0]
         if count == 0:
@@ -38,7 +36,6 @@ def create_tables():
                 [('DNI',), ('Carné de Extranjería',), ('Pasaporte',), ('RUC',)]
             )
 
-
         # Tabla de Niveles de Educación
         cursor.execute('''
         CREATE TABLE IF NOT EXISTS education_levels (
@@ -46,7 +43,6 @@ def create_tables():
             level TEXT NOT NULL UNIQUE
         )
         ''')
-        # 🛠 Verificar si los tipos de documentos ya existen antes de insertarlos
         cursor.execute("SELECT COUNT(*) FROM education_levels")
         count = cursor.fetchone()[0]
         if count == 0:
@@ -62,7 +58,6 @@ def create_tables():
             status TEXT NOT NULL UNIQUE
         )
         ''')
-        # 🛠 Verificar si los estados civiles ya existen antes de insertarlos
         cursor.execute("SELECT COUNT(*) FROM marital_status")
         count = cursor.fetchone()[0]
         if count == 0:
@@ -71,7 +66,17 @@ def create_tables():
                 [('SOLTERO',), ('CASADO',), ('VIUDO',), ('DIVORCIADO',)]
             )
 
-        # Tabla de Doctores (Odontólogos) con campos extendidos para Perú
+        # Tabla de Especialidades
+        cursor.execute('''
+        CREATE TABLE IF NOT EXISTS specialties (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            nombre TEXT NOT NULL UNIQUE,
+            descripcion TEXT,
+            estado TEXT DEFAULT 'Activo'
+        );
+        ''')
+
+        # Tabla de Doctores (Odontólogos)
         cursor.execute('''
         CREATE TABLE IF NOT EXISTS doctors (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -101,16 +106,16 @@ def create_tables():
         if cursor.fetchone() is None:
             cursor.execute("INSERT INTO users (username, password, role, email) VALUES ('admin', 'admin123', 'admin', 'admin@clinic.com')")
 
-        # Tabla de Pacientes con campos ampliados para Perú
+        # Tabla de Pacientes – aquí guardamos el número de historia (history_number)
         cursor.execute('''
         CREATE TABLE IF NOT EXISTS patients (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            history_number TEXT UNIQUE  ,
             nombres TEXT NOT NULL,
             apellidos TEXT NOT NULL,
             edad INTEGER,
             tipo_documento_id INTEGER,
             nro_documento TEXT NOT NULL UNIQUE,
+            history_number TEXT UNIQUE,
             grado_instruccion_id INTEGER,
             hospital_nacimiento TEXT,
             pais TEXT,
@@ -129,10 +134,9 @@ def create_tables():
             fecha_registro TEXT DEFAULT CURRENT_TIMESTAMP,
             estado TEXT,
             is_deleted INTEGER DEFAULT 0,
-            FOREIGN KEY (tipo_documento_id) REFERENCES document_types(id),
-            FOREIGN KEY (grado_instruccion_id) REFERENCES education_levels(id),
-            FOREIGN KEY (estado_civil_id) REFERENCES marital_status(id),
-            FOREIGN KEY (history_number) REFERENCES historias_clinicas(numero_historia)
+            FOREIGN KEY(tipo_documento_id) REFERENCES document_types(id),
+            FOREIGN KEY(grado_instruccion_id) REFERENCES education_levels(id),
+            FOREIGN KEY(estado_civil_id) REFERENCES marital_status(id)
         )
         ''')
 
@@ -143,7 +147,8 @@ def create_tables():
             patient_id INTEGER NOT NULL,
             doctor_id INTEGER NOT NULL,
             date TEXT NOT NULL,
-            time TEXT NOT NULL,
+            first_time TEXT NOT NULL,
+            end_time TEXT,
             duration INTEGER,
             notes TEXT,
             status_id INTEGER DEFAULT 1,
@@ -154,18 +159,15 @@ def create_tables():
         )
         ''')
 
-        # Tabla de estado de las Citas (Pending, Completed, Cancelled)
+        # Tabla de Estado de las Citas
         cursor.execute('''
         CREATE TABLE IF NOT EXISTS appointment_status (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT NOT NULL UNIQUE
         );
         ''')
-
-        # Verificar si ya existen los valores en la tabla de estados de citas
         cursor.execute("SELECT COUNT(*) FROM appointment_status WHERE name IN ('Pending', 'Completed', 'Cancelled')")
         count = cursor.fetchone()[0]
-        # insertamos los estados de las citas
         if count == 0:
             cursor.execute("INSERT INTO appointment_status (name) VALUES ('Pending'), ('Completed'), ('Cancelled')")
 
@@ -179,7 +181,7 @@ def create_tables():
         )
         ''')
 
-        # Tabla de Tratamientos Aplicados (Relación entre Citas y Tratamientos)
+        # Tabla de Tratamientos Aplicados
         cursor.execute('''
         CREATE TABLE IF NOT EXISTS applied_treatments (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -188,23 +190,6 @@ def create_tables():
             notes TEXT,
             FOREIGN KEY(appointment_id) REFERENCES appointments(id),
             FOREIGN KEY(treatment_id) REFERENCES treatments(id)
-        )
-        ''')
-
-        # Tabla de Historia Clínica
-        cursor.execute('''
-        CREATE TABLE IF NOT EXISTS history (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            patient_id INTEGER NOT NULL,
-            doctor_id INTEGER NOT NULL,
-            date TEXT NOT NULL,
-            diagnosis TEXT NOT NULL,
-            procedure TEXT NOT NULL,
-            treatment_plan TEXT,
-            notes TEXT,
-            attachments TEXT,
-            FOREIGN KEY(patient_id) REFERENCES patients(id),
-            FOREIGN KEY(doctor_id) REFERENCES doctors(id)
         )
         ''')
 
@@ -311,41 +296,18 @@ def create_tables():
         )
         ''')
 
-        # Tabla de Recursos Humanos
-        cursor.execute('''
-        CREATE TABLE IF NOT EXISTS hr (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,
-            role TEXT NOT NULL,
-            phone TEXT,
-            email TEXT,
-            hire_date TEXT NOT NULL
-        )
-        ''')
-
-        # Tabla de especialidades
-        cursor.execute('''
-        CREATE TABLE IF NOT EXISTS specialties (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            nombre TEXT NOT NULL UNIQUE,
-            descripcion TEXT,
-            estado TEXT DEFAULT 'Activo'
-        );
-        ''')
-
-        # Tabla de Historias Clínicas
+        # Tabla de Historias Clínicas (almacena datos adicionales de la historia)
         cursor.execute('''
         CREATE TABLE IF NOT EXISTS historias_clinicas (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             paciente_id INTEGER NOT NULL,
-            numero_historia TEXT NOT NULL UNIQUE,
             fecha_creacion TEXT NOT NULL,
             observaciones TEXT,
             FOREIGN KEY (paciente_id) REFERENCES patients(id)
         );
         ''')
 
-        # Tabla de Exploración Física
+        # Tablas complementarias de la Historia Clínica
         cursor.execute('''
         CREATE TABLE IF NOT EXISTS exploracion_fisica (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -370,7 +332,6 @@ def create_tables():
         );
         ''')
 
-        # Tabla de Funciones Vitales
         cursor.execute('''
         CREATE TABLE IF NOT EXISTS funciones_vitales (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -387,7 +348,6 @@ def create_tables():
         );
         ''')
 
-        # Tabla de Alergias
         cursor.execute('''
         CREATE TABLE IF NOT EXISTS alergias (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -398,7 +358,6 @@ def create_tables():
         );
         ''')
 
-        # Tabla de Odontograma (detallado)
         cursor.execute('''
         CREATE TABLE IF NOT EXISTS odontograma_detalle (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -409,7 +368,6 @@ def create_tables():
         );
         ''')
 
-        # Tabla de Diagnósticos
         cursor.execute('''
         CREATE TABLE IF NOT EXISTS diagnosticos (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -420,7 +378,6 @@ def create_tables():
         );
         ''')
 
-        # Tabla de Tratamientos (detallado)
         cursor.execute('''
         CREATE TABLE IF NOT EXISTS tratamientos_detalle (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -431,11 +388,10 @@ def create_tables():
         );
         ''')
 
-
-        # Índices para mejorar el rendimiento de las consultas
+        # Índices para mejorar el rendimiento
         cursor.execute('CREATE INDEX IF NOT EXISTS idx_patient_id ON appointments(patient_id)')
         cursor.execute('CREATE INDEX IF NOT EXISTS idx_doctor_id ON appointments(doctor_id)')
-        cursor.execute('CREATE INDEX IF NOT EXISTS idx_patient_id_history ON history(patient_id)')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_patient_id_history ON historias_clinicas(paciente_id)')
         cursor.execute('CREATE INDEX IF NOT EXISTS idx_patient_id_odontogram ON odontogram(patient_id)')
         cursor.execute('CREATE INDEX IF NOT EXISTS idx_patient_id_payments ON payments(patient_id)')
 

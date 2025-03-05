@@ -170,3 +170,12 @@ class HistoriaClinicaModel:
                 VALUES (?, CURRENT_TIMESTAMP, '')
             """, (patient_id,))
             conn.commit()
+
+    @staticmethod
+    def get_paciente_id_by_historia(history_id):
+        """Obtiene el `paciente_id` dado un `history_id`."""
+        with connect_db() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT paciente_id FROM historias_clinicas WHERE id = ?", (history_id,))
+            result = cursor.fetchone()
+            return result[0] if result else None  # 📌 Devuelve `None` si no encuentra el paciente

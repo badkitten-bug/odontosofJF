@@ -13,6 +13,10 @@ class HistoriaController:
     def get_historia(self, historia_id):
         """Obtiene una historia clínica específica para edición"""
         return self.model.get_historia_by_id(historia_id)
+    
+    def get_history_by_id(self, historia_id):
+        """Obtiene una historia clínica por su ID"""
+        return self.model.get_historia_by_id(historia_id)
 
     def obtener_historias_clinicas(self, fecha_desde=None, fecha_hasta=None, nombre_paciente=None):
         return self.model.get_historias_clinicas(fecha_desde, fecha_hasta, nombre_paciente)

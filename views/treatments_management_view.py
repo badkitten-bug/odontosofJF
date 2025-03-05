@@ -1,58 +1,92 @@
-# views/treatment_view.py
 import flet as ft
 from controllers.treatment_controller import TreatmentController
-from controllers.material_controller import MaterialController
 
-def treatment_view(page: ft.Page):
-    treatment_controller = TreatmentController()
-    material_controller = MaterialController()
+def treatments_management_view(page: ft.Page):
+    controller = TreatmentController()
 
-    # Inputs
-    name_input = ft.TextField(label="Nombre del Tratamiento")
-    description_input = ft.TextField(label="Descripción", multiline=True)
-    cost_input = ft.TextField(label="Costo", keyboard_type=ft.KeyboardType.NUMBER)
-    category_input = ft.Dropdown(
-        options=[ft.dropdown.Option("Curaciones"), ft.dropdown.Option("Extracciones"), ft.dropdown.Option("Endodoncia"), ft.dropdown.Option("Prótesis")],
-        label="Categoría"
-    )
-
-    # Tabla de tratamientos
-    treatments_table = ft.DataTable(
-        columns=[
-            ft.DataColumn(ft.Text("ID")),
-            ft.DataColumn(ft.Text("Nombre")),
-            ft.DataColumn(ft.Text("Descripción")),
-            ft.DataColumn(ft.Text("Costo")),
-            ft.DataColumn(ft.Text("Categoría"))
-        ],
-        rows=[]
-    )
-
-    def refresh_treatments():
-        treatments = treatment_controller.load_treatments()
-        treatments_table.rows = [
-            ft.DataRow(cells=[
-                ft.DataCell(ft.Text(str(t[0]))),
-                ft.DataCell(ft.Text(t[1])),
-                ft.DataCell(ft.Text(t[2])),
-                ft.DataCell(ft.Text(str(t[3]))),
-                ft.DataCell(ft.Text(t[4]))
-            ]) for t in treatments
-        ]
+    # **Lista de Tratamientos**
+    def load_treatments():
+        treatments_list.controls.clear()
+        for treatment in controller.get_treatments():
+            treatments_list.controls.append(create_treatment_row(treatment))
         page.update()
 
-    def add_treatment(e):
-        treatment_controller.add_treatment(
-            name_input.value, description_input.value, float(cost_input.value), category_input.value
+    # **Crear fila de tratamiento**
+    def create_treatment_row(treatment):
+        treatment_id, name, description, cost = treatment
+
+        return ft.Row([
+            ft.Text(name, width=150),
+            ft.Text(description, width=250),
+            ft.Text(f"S/. {cost}", width=80),
+            ft.IconButton(ft.icons.EDIT, on_click=lambda e: open_edit_dialog(treatment_id, name, description, cost)),
+            ft.IconButton(ft.icons.DELETE, on_click=lambda e: open_delete_dialog(treatment_id))
+        ], spacing=10)
+
+    # **Diálogo de edición**
+    def open_edit_dialog(treatment_id, name, description, cost):
+        name_input = ft.TextField(label="Nombre", value=name)
+        description_input = ft.TextField(label="Descripción", value=description)
+        cost_input = ft.TextField(label="Costo", value=str(cost))
+
+        def save_changes(e):
+            controller.update_treatment(treatment_id, name_input.value, description_input.value, float(cost_input.value))
+            page.close(dialog)
+            page.snack_bar = ft.SnackBar(ft.Text("Tratamiento actualizado correctamente."), open=True)
+            page.update()
+            load_treatments()
+
+        dialog = ft.AlertDialog(
+            title=ft.Text("Editar Tratamiento"),
+            content=ft.Column([name_input, description_input, cost_input], spacing=10),
+            actions=[
+                ft.TextButton("Guardar", on_click=save_changes),
+                ft.TextButton("Cancelar", on_click=lambda e: page.close(dialog))
+            ],
+            actions_alignment=ft.MainAxisAlignment.END
         )
-        refresh_treatments()
+        page.dialog = dialog
+        page.open(dialog)
 
-    add_button = ft.ElevatedButton("Guardar", on_click=add_treatment)
+    # **Diálogo de eliminación**
+    def open_delete_dialog(treatment_id):
+        def confirm_delete(e):
+            controller.delete_treatment(treatment_id)
+            page.close(dialog)
+            page.snack_bar = ft.SnackBar(ft.Text("Tratamiento eliminado."), open=True)
+            page.update()
+            load_treatments()
 
-    refresh_treatments()
+        dialog = ft.AlertDialog(
+            title=ft.Text("Eliminar Tratamiento"),
+            content=ft.Text("¿Estás seguro de que deseas eliminar este tratamiento?"),
+            actions=[
+                ft.TextButton("Cancelar", on_click=lambda e: page.close(dialog)),
+                ft.TextButton("Eliminar", on_click=confirm_delete)
+            ],
+            actions_alignment=ft.MainAxisAlignment.END
+        )
+        page.dialog = dialog
+        page.open(dialog)
+
+    # **Formulario para agregar tratamiento**
+    name_input = ft.TextField(label="Nombre del Tratamiento")
+    description_input = ft.TextField(label="Descripción")
+    cost_input = ft.TextField(label="Costo")
+
+    def add_treatment(e):
+        controller.add_treatment(name_input.value, description_input.value, float(cost_input.value))
+        page.snack_bar = ft.SnackBar(ft.Text("Tratamiento agregado correctamente."), open=True)
+        page.update()
+        load_treatments()
+        name_input.value, description_input.value, cost_input.value = "", "", ""
+        page.update()
+
+    # **Interfaz**
+    treatments_list = ft.Column(scroll=ft.ScrollMode.AUTO)
 
     return ft.Column([
-        ft.Row([name_input, description_input, cost_input, category_input]),
-        add_button,
-        treatments_table
-    ])
+        ft.Text("Gestión de Tratamientos", size=24, weight="bold"),
+        ft.Row([name_input, description_input, cost_input, ft.ElevatedButton("Agregar", on_click=add_treatment)], spacing=10),
+        ft.Container(treatments_list, padding=10, border_radius=5, bgcolor=ft.Colors.WHITE, shadow=ft.BoxShadow(blur_radius=5)),
+    ], spacing=10)

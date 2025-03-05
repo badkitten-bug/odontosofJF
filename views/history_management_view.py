@@ -1,7 +1,7 @@
-import flet as ft
+import flet as ft  # Asegúrate de que esta línea esté al inicio del archivo
 from controllers.historia_controller import HistoriaController
 
-def history_management_view(page: ft.Page):
+def history_management_view(page: ft.Page, menu_controller, dynamic_content: ft.Column):
     controller = HistoriaController()
 
     # Filtros para búsqueda
@@ -55,14 +55,8 @@ def history_management_view(page: ft.Page):
                             ft.IconButton(
                                 icon=ft.Icons.EDIT,
                                 tooltip="Editar Historia",
-                                on_click=lambda e, id=history[0]: page.go(f"/history-edit/{id}")
+                                on_click=lambda e, history_id=history[0]: menu_controller.show_history_detail_view(dynamic_content, history_id)
                             ),
-                            # Puedes agregar otro botón para eliminar si lo deseas:
-                            # ft.IconButton(
-                            #     icon=ft.Icons.DELETE,
-                            #     tooltip="Eliminar Historia",
-                            #     on_click=lambda e, id=history[0]: delete_history(id)
-                            # )
                         ])
                     ),
                 ]
@@ -71,18 +65,9 @@ def history_management_view(page: ft.Page):
         ]
         page.update()
 
-    # Función para redirigir a la vista de edición de la historia clínica
-    def edit_history(history_id):
-        page.go(f"/history-detail/{history_id}")
-
     # Función para redirigir a la vista de creación de una nueva historia clínica
     def new_history(e):
         page.go("/new-history")
-
-    # Si deseas agregar también la función para eliminar una historia, podrías implementarla así:
-    # def delete_history(history_id):
-    #     controller.delete_historia(history_id)
-    #     search_histories(None)  # Refresca la tabla
 
     # Layout principal
     return ft.Column([
